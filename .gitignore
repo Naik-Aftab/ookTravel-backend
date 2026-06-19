@@ -1,0 +1,25 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/*.log
+
+# Uploads (user files)
+uploads/commission_proofs/*
+uploads/kyc/*
+uploads/payments/*
+uploads/policies/*
+uploads/profiles/*
+
+# Keep folder structure
+!uploads/commission_proofs/.gitkeep
+!uploads/kyc/.gitkeep
+!uploads/payments/.gitkeep
+!uploads/policies/.gitkeep
+!uploads/profiles/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db

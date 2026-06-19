@@ -1,0 +1,40 @@
+const multer = require('multer');
+const path   = require('path');
+const fs     = require('fs');
+
+function createStorage(subfolder) {
+  const dest = path.join(__dirname, '../../uploads', subfolder);
+  if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+
+  return multer.diskStorage({
+    destination: (req, file, cb) => cb(null, dest),
+    filename:    (req, file, cb) => {
+      const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      cb(null, `${unique}${path.extname(file.originalname)}`);
+    },
+  });
+}
+
+const allowedMime      = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const allowedImageMime = ['image/jpeg', 'image/png', 'image/webp'];
+
+function fileFilter(req, file, cb) {
+  if (allowedMime.includes(file.mimetype)) return cb(null, true);
+  cb(new Error('Only images (JPEG/PNG/WebP) and PDF files are allowed'), false);
+}
+
+function imageOnlyFilter(req, file, cb) {
+  if (allowedImageMime.includes(file.mimetype)) return cb(null, true);
+  cb(new Error('Only image files (JPEG/PNG/WebP) are allowed'), false);
+}
+
+const maxSize = parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024; // 5 MB
+const maxImageSize = 2 * 1024 * 1024; // 2 MB for profile photos
+
+const uploadPolicy       = multer({ storage: createStorage('policies'),          fileFilter,      limits: { fileSize: maxSize } });
+const uploadKyc          = multer({ storage: createStorage('kyc'),               fileFilter,      limits: { fileSize: maxSize } });
+const uploadPayment      = multer({ storage: createStorage('payments'),          fileFilter,      limits: { fileSize: maxSize } });
+const uploadPaymentProof = multer({ storage: createStorage('commission_proofs'), fileFilter,      limits: { fileSize: maxSize } });
+const uploadProfilePhoto = multer({ storage: createStorage('profiles'),          fileFilter: imageOnlyFilter, limits: { fileSize: maxImageSize } });
+
+module.exports = { uploadPolicy, uploadKyc, uploadPayment, uploadPaymentProof, uploadProfilePhoto };
