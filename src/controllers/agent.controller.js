@@ -53,4 +53,11 @@ async function updateKyc(req, res, next) {
   } catch (e) { next(e); }
 }
 
-module.exports = { getAll, getOne, assignRm, transferAgent, activate, suspend, updateKyc };
+async function assignAllToRm(req, res, next) {
+  try {
+    await agentService.assignAllToRm(+req.body.rm_id, req.user.id, req.user.full_name || req.user.email, req.ip);
+    successResponse(res, null, 'All agents assigned to RM');
+  } catch (e) { next(e); }
+}
+
+module.exports = { getAll, getOne, assignRm, transferAgent, activate, suspend, updateKyc, assignAllToRm };

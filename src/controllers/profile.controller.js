@@ -1,4 +1,5 @@
 const profileService     = require('../services/profile.service');
+const agentRepo          = require('../repositories/agent.repository');
 const { successResponse } = require('../utils/response');
 
 async function updateDetails(req, res, next) {
@@ -15,4 +16,12 @@ async function updateProfilePhoto(req, res, next) {
   } catch (e) { next(e); }
 }
 
-module.exports = { updateDetails, updateProfilePhoto };
+async function getAssignedRm(req, res, next) {
+  try {
+    const agentId = parseInt(req.params.agentId, 10);
+    const rm = await agentRepo.findAssignedRm(agentId);
+    res.json({ ok: true, data: rm || null });
+  } catch (e) { next(e); }
+}
+
+module.exports = { updateDetails, updateProfilePhoto, getAssignedRm };

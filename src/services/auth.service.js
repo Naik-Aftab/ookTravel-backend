@@ -2,10 +2,12 @@ const bcrypt                    = require('bcryptjs');
 const adminRepo                 = require('../repositories/admin.repository');
 const rmRepo                    = require('../repositories/rm.repository');
 const agentRepo                 = require('../repositories/agent.repository');
+const notifRepo                 = require('../repositories/notification.repository');
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../config/jwt');
-const { sendEmail, forgotPasswordEmail } = require('../utils/email');
+const { sendEmail, forgotPasswordEmail, agentWelcomeEmail } = require('../utils/email');
 const auditRepo                 = require('../repositories/audit.repository');
 const crypto                    = require('crypto');
+const logger                    = require('../utils/logger');
 
 async function adminLogin(email, password, ip) {
   const admin = await adminRepo.findByEmail(email);
@@ -68,7 +70,44 @@ async function agentSignup(data) {
   const hashed = await bcrypt.hash(password, 12);
   const id = await agentRepo.create({ full_name: fullName, email, mobile: phoneNumber, password: hashed });
 
+  // Auto-assign to the first active RM
+  const { rows: activeRms } = await rmRepo.findAll({ status: 'active', limit: 1 });
+  if (activeRms.length > 0) {
+    const rm = activeRms[0];
+    await agentRepo.assignRm(id, rm.id);
+
+    await notifRepo.create({
+      user_type: 'rm', user_id: rm.id,
+      title: 'New Agent Registered',
+      message: `${fullName} has registered and been assigned to you.`,
+      type: 'assignment', entity_type: 'agent', entity_id: id,
+    });
+
+    await auditRepo.log({
+      user_type: 'agent', user_id: id, user_name: fullName,
+      action: 'AGENT_REGISTERED_RM_AUTO_ASSIGNED',
+      entity_type: 'agent', entity_id: id,
+      new_values: { assigned_rm_id: rm.id, rm_name: rm.full_name },
+    });
+  }
+
+  // Notify all active admins
+  const admins = await adminRepo.findAllActive();
+  await Promise.all(admins.map(admin =>
+    notifRepo.create({
+      user_type: 'admin', user_id: admin.id,
+      title: 'New Agent Registered',
+      message: `${fullName} has registered and is awaiting your approval.`,
+      type: 'registration', entity_type: 'agent', entity_id: id,
+    })
+  ));
+
+  // Welcome email — non-blocking so email failure doesn't break signup
   const agent = await agentRepo.findById(id);
+  sendEmail(agentWelcomeEmail(agent)).catch(err => {
+    logger.error(`Welcome email failed for agent ${agent.email}: ${err.message}`);
+  });
+
   return agent;
 }
 

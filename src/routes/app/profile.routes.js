@@ -15,6 +15,9 @@ const updatePhotoRules = [
   body('agent_id').isInt({ min: 1 }).withMessage('agent_id is required'),
 ];
 
+// GET /api/app/profile/rm/:agentId
+router.get('/rm/:agentId', ctrl.getAssignedRm);
+
 // PATCH /api/app/profile/details
 router.patch('/details', updateDetailsRules, validate, ctrl.updateDetails);
 

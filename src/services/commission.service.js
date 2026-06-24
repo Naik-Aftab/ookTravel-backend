@@ -3,6 +3,7 @@ const notifRepo    = require('../repositories/notification.repository');
 const auditRepo    = require('../repositories/audit.repository');
 const agentRepo    = require('../repositories/agent.repository');
 const { sendEmail, commissionPaidEmail } = require('../utils/email');
+const logger       = require('../utils/logger');
 
 async function getAllCommissions(filters) {
   return commRepo.findAll(filters);
@@ -43,7 +44,9 @@ async function createPayment(data, adminId, adminName, ip) {
       message: `₹${data.payment_amount} commission has been paid to your account.`,
       type: 'commission_paid', entity_type: 'commission', entity_id: data.commission_id,
     });
-    await sendEmail(commissionPaidEmail(agent, data.payment_amount)).catch(() => {});
+    await sendEmail(commissionPaidEmail(agent, data.payment_amount)).catch(err => {
+      logger.error(`Commission payment email failed for ${agent.email}: ${err.message}`);
+    });
   }
 
   await auditRepo.log({

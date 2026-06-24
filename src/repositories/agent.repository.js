@@ -52,6 +52,10 @@ async function assignRm(agentId, rmId) {
   return query('UPDATE ooktravel_agents SET assigned_rm_id = ? WHERE id = ?', [rmId, agentId]);
 }
 
+async function assignAllToRm(rmId) {
+  return query('UPDATE ooktravel_agents SET assigned_rm_id = ?', [rmId]);
+}
+
 async function updateStatus(id, status) {
   return query('UPDATE ooktravel_agents SET status = ? WHERE id = ?', [status, id]);
 }
@@ -141,4 +145,14 @@ async function findByMobileExcluding(mobile, excludeId) {
   return queryOne('SELECT id FROM ooktravel_agents WHERE mobile = ? AND id != ?', [mobile, excludeId]);
 }
 
-module.exports = { create, findById, findByEmail, findByMobile, findByEmailExcluding, findByMobileExcluding, findAll, findByRmId, assignRm, updateStatus, updateKycStatus, update, updateDetails, updateProfilePhoto, saveBankDetails, getBankDetails, updateLastLogin, saveRefreshToken, updatePassword };
+async function findAssignedRm(agentId) {
+  return queryOne(
+    `SELECT r.full_name, r.mobile, r.email
+     FROM ooktravel_agents a
+     JOIN ooktravel_rms r ON r.id = a.assigned_rm_id
+     WHERE a.id = ?`,
+    [agentId]
+  );
+}
+
+module.exports = { create, findById, findByEmail, findByMobile, findByEmailExcluding, findByMobileExcluding, findAll, findByRmId, assignRm, assignAllToRm, updateStatus, updateKycStatus, update, updateDetails, updateProfilePhoto, saveBankDetails, getBankDetails, updateLastLogin, saveRefreshToken, updatePassword, findAssignedRm };

@@ -46,6 +46,40 @@ async function updateRequestStatus(id, status, remarks, userId, userRole, ip) {
     old_values: { status: old_status }, new_values: { status, remarks }, ip_address: ip,
   });
 
+  // When marked as issued from the status dropdown, auto-create a policy + commission
+  if (status === 'issued') {
+    const effectiveRmId = req.rm_id || (userRole === 'rm' ? userId : null);
+    if (effectiveRmId && req.payment_amount) {
+      const existing = await policyRepo.findPolicyByRequestId(id);
+      if (!existing) {
+        const { insertId, policy_number } = await policyRepo.createPolicy({
+          request_id:     id,
+          agent_id:       req.agent_id,
+          rm_id:          effectiveRmId,
+          provider_name:  'External Portal',
+          plan_name:      req.plan_type || 'Travel Insurance',
+          premium_amount: req.payment_amount,
+          coverage_amount: null,
+          issue_date:     new Date().toISOString().split('T')[0],
+          expiry_date:    req.return_date,
+          policy_pdf:     null,
+        });
+        await commRepo.createCommission(insertId, req.agent_id, req.payment_amount);
+        await notifRepo.create({
+          user_type: 'agent', user_id: req.agent_id,
+          title: 'Policy Issued',
+          message: `Your policy ${policy_number} has been issued.`,
+          type: 'policy_issued', entity_type: 'policy', entity_id: insertId,
+        });
+        await auditRepo.log({
+          user_type: userRole, user_id: userId, action: 'POLICY_AUTO_ISSUED',
+          entity_type: 'policy', entity_id: insertId,
+          new_values: { policy_number, premium_amount: req.payment_amount }, ip_address: ip,
+        });
+      }
+    }
+  }
+
   // Notify agent of status change
   await notifRepo.create({
     user_type: 'agent', user_id: req.agent_id,

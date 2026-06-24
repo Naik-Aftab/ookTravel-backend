@@ -1,15 +1,14 @@
 const { body, param } = require('express-validator');
 
 const createRequestRules = [
-  body('traveler_name').trim().isLength({ min: 2, max: 100 }),
-  body('destination').trim().notEmpty(),
+  body('traveler_name').optional().trim().isLength({ min: 2, max: 100 }),
   body('travel_date').isDate(),
   body('return_date').isDate(),
   body('num_travelers').optional().isInt({ min: 1, max: 99 }),
-  body('plan_type').optional().trim(),
   body('estimated_premium').optional().isFloat({ min: 0 }),
   body('payment_amount').optional().isFloat({ min: 0 }),
   body('payment_reference').optional().trim(),
+  body('traveller_details').optional(),
 ];
 
 const issuePolicyRules = [

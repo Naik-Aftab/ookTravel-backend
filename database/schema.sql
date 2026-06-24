@@ -83,19 +83,19 @@ CREATE TABLE IF NOT EXISTS ooktravel_policy_requests (
   request_number       VARCHAR(50)   NOT NULL UNIQUE,
   agent_id             INT           NOT NULL,
   rm_id                INT           NULL,
-  traveler_name        VARCHAR(100)  NOT NULL,
+  traveler_name        VARCHAR(100)  NULL,
   traveler_mobile      VARCHAR(15)   NULL,
   traveler_email       VARCHAR(100)  NULL,
-  destination          VARCHAR(100)  NOT NULL,
   travel_date          DATE          NOT NULL,
   return_date          DATE          NOT NULL,
   num_travelers        INT           DEFAULT 1,
   plan_type            VARCHAR(100)  NULL,
-  coverage_amount      DECIMAL(12,2) NULL,
+  no_of_days           INT           NULL,
   estimated_premium    DECIMAL(10,2) NULL,
   payment_amount       DECIMAL(10,2) NULL,
   payment_reference    VARCHAR(100)  NULL,
   payment_screenshot   VARCHAR(255)  NULL,
+  traveller_details    JSON          NULL,
   status               ENUM('submitted','assigned','under_review','issued','expired','claimed','rejected') DEFAULT 'submitted',
   remarks              TEXT          NULL,
   created_at           TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
@@ -214,3 +214,12 @@ ALTER TABLE ooktravel_policies        ADD INDEX idx_agent   (agent_id);
 ALTER TABLE ooktravel_policies        ADD INDEX idx_rm      (rm_id);
 ALTER TABLE ooktravel_commissions     ADD INDEX idx_agent   (agent_id);
 ALTER TABLE ooktravel_commissions     ADD INDEX idx_status  (status);
+
+-- ============================================================
+-- Migration: run once on existing databases
+-- ============================================================
+-- ALTER TABLE ooktravel_policy_requests
+--   DROP COLUMN destination,
+--   DROP COLUMN coverage_amount,
+--   MODIFY COLUMN traveler_name VARCHAR(100) NULL,
+--   ADD COLUMN traveller_details JSON NULL;

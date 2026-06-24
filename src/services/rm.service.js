@@ -3,6 +3,7 @@ const rmRepo       = require('../repositories/rm.repository');
 const notifRepo    = require('../repositories/notification.repository');
 const auditRepo    = require('../repositories/audit.repository');
 const { sendEmail, rmApprovalEmail } = require('../utils/email');
+const logger       = require('../utils/logger');
 
 async function getAllRms(filters) {
   return rmRepo.findAll(filters);
@@ -20,7 +21,9 @@ async function approveRm(id, adminId, adminName, ip) {
   if (rm.status === 'active') throw Object.assign(new Error('RM already active'), { statusCode: 400 });
 
   await rmRepo.updateStatus(id, 'active', adminId);
-  await sendEmail(rmApprovalEmail(rm)).catch(() => {});
+  await sendEmail(rmApprovalEmail(rm)).catch(err => {
+    logger.error(`RM approval email failed for ${rm.email}: ${err.message}`);
+  });
   await notifRepo.create({ user_type: 'rm', user_id: id, title: 'Account Approved', message: 'Your RM account has been approved. You can now log in.', type: 'approval' });
   await auditRepo.log({ user_type: 'admin', user_id: adminId, user_name: adminName, action: 'RM_APPROVED', entity_type: 'rm', entity_id: id, ip_address: ip });
 }

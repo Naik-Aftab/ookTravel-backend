@@ -24,4 +24,8 @@ async function updatePassword(id, hashedPassword) {
   return query('UPDATE ooktravel_admins SET password = ?, reset_token = NULL, reset_token_exp = NULL WHERE id = ?', [hashedPassword, id]);
 }
 
-module.exports = { findByEmail, findById, updateLastLogin, updateResetToken, findByResetToken, updatePassword };
+async function findAllActive() {
+  return query('SELECT id, full_name, email FROM ooktravel_admins WHERE is_active = 1');
+}
+
+module.exports = { findByEmail, findById, findAllActive, updateLastLogin, updateResetToken, findByResetToken, updatePassword };

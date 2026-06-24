@@ -12,19 +12,38 @@ function generatePolicyNumber() {
 // ── Policy Requests ──────────────────────────────────────────
 
 async function createRequest(data) {
+
+  console.log("request data",data)
   const request_number = generateRequestNumber();
+
+  const details = data.traveller_details || {};
+  const partner = details.pTrvPartnerDtls_inout || {};
+  const travelerName = details.name ||
+    [partner.firstname, partner.middlename, partner.lastname].filter(Boolean).join(' ') ||
+    'Unknown';
+  const travelerMobile = details.phone || partner.mobileNo || null;
+  const travelerEmail  = details.email  || partner.email    || null;
+  const travelerDetailsJson = typeof details === 'string' ? details : JSON.stringify(details);
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const no_of_days = data.travel_date && data.return_date
+    ? Math.max(1, Math.round((new Date(data.return_date) - new Date(data.travel_date)) / msPerDay) + 1)
+    : null;
+
   const result = await query(
     `INSERT INTO ooktravel_policy_requests
        (request_number, agent_id, traveler_name, traveler_mobile, traveler_email,
-        destination, travel_date, return_date, num_travelers, plan_type,
-        coverage_amount, estimated_premium, payment_amount, payment_reference, payment_screenshot)
+        travel_date, return_date, num_travelers, plan_type, no_of_days,
+        estimated_premium, payment_amount, payment_reference, payment_screenshot,
+        traveller_details)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      request_number, data.agent_id, data.traveler_name, data.traveler_mobile || null,
-      data.traveler_email || null, data.destination, data.travel_date, data.return_date,
-      data.num_travelers || 1, data.plan_type || null, data.coverage_amount || null,
+      request_number, data.agent_id, travelerName, travelerMobile, travelerEmail,
+      data.travel_date, data.return_date, data.num_travelers || 1, data.plan_type || 'individual',
+      no_of_days,
       data.estimated_premium || null, data.payment_amount || null,
       data.payment_reference || null, data.payment_screenshot || null,
+      travelerDetailsJson,
     ]
   );
   return { insertId: result.insertId, request_number };
@@ -60,8 +79,8 @@ async function findAllRequests({ status, rm_id, agent_id, search, page = 1, limi
     params
   );
   const rows = await query(
-    `SELECT r.id, r.request_number, r.traveler_name, r.destination, r.travel_date, r.return_date,
-       r.estimated_premium, r.payment_amount, r.status, r.created_at,
+    `SELECT r.id, r.request_number, r.traveler_name, r.travel_date, r.return_date,
+       r.estimated_premium, r.payment_amount, r.status, r.plan_type, r.num_travelers, r.created_at,
        a.full_name AS agent_name, rm.full_name AS rm_name
      FROM ooktravel_policy_requests r
      LEFT JOIN ooktravel_agents a ON a.id = r.agent_id
@@ -105,7 +124,7 @@ async function createPolicy(data) {
 async function findPolicyById(id) {
   return queryOne(
     `SELECT p.*, a.full_name AS agent_name, rm.full_name AS rm_name,
-       r.request_number, r.destination, r.traveler_name
+       r.request_number, r.traveler_name
      FROM ooktravel_policies p
      LEFT JOIN ooktravel_agents           a ON a.id = p.agent_id
      LEFT JOIN ooktravel_rms             rm ON rm.id = p.rm_id
@@ -150,7 +169,26 @@ async function updatePolicyPdf(id, pdfPath) {
   return query('UPDATE ooktravel_policies SET policy_pdf = ? WHERE id = ?', [pdfPath, id]);
 }
 
+async function findPolicyByRequestId(requestId) {
+  return queryOne('SELECT id, policy_number FROM ooktravel_policies WHERE request_id = ?', [requestId]);
+}
+
+// Returns issued policies for the app commission screen in IssuedPolicyRecord shape
+async function findIssuedPoliciesByAgent(agentId) {
+  return query(
+    `SELECT p.id, p.policy_number AS uuid, p.premium_amount AS premium,
+       p.plan_name AS product, p.created_at, p.updated_at,
+       r.no_of_days, r.traveller_details
+     FROM ooktravel_policies p
+     LEFT JOIN ooktravel_policy_requests r ON r.id = p.request_id
+     WHERE p.agent_id = ? AND p.status != 'cancelled'
+     ORDER BY p.created_at DESC`,
+    [agentId]
+  );
+}
+
 module.exports = {
   createRequest, findRequestById, findAllRequests, updateRequestStatus,
-  createPolicy, findPolicyById, findAllPolicies, updatePolicyPdf,
+  createPolicy, findPolicyById, findPolicyByRequestId, findAllPolicies, updatePolicyPdf,
+  findIssuedPoliciesByAgent,
 };

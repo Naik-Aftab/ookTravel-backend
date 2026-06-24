@@ -58,8 +58,28 @@ async function updateKyc(id, status, adminId, adminName, ip) {
   await auditRepo.log({ user_type: 'admin', user_id: adminId, user_name: adminName, action: 'AGENT_KYC_UPDATED', entity_type: 'agent', entity_id: id, new_values: { kyc_status: status }, ip_address: ip });
 }
 
+async function assignAllToRm(rmId, adminId, adminName, ip) {
+  const rm = await rmRepo.findById(rmId);
+  if (!rm || rm.status !== 'active') throw Object.assign(new Error('RM not found or not active'), { statusCode: 404 });
+
+  await agentRepo.assignAllToRm(rmId);
+
+  await notifRepo.create({
+    user_type: 'rm', user_id: rmId,
+    title: 'All Agents Assigned',
+    message: 'All agents have been assigned to you by the admin.',
+    type: 'assignment', entity_type: 'agent', entity_id: null,
+  });
+
+  await auditRepo.log({
+    user_type: 'admin', user_id: adminId, user_name: adminName,
+    action: 'ALL_AGENTS_RM_ASSIGNED', entity_type: 'agent', entity_id: null,
+    new_values: { rm_id: rmId }, ip_address: ip,
+  });
+}
+
 async function getAgentsByRm(rmId) {
   return agentRepo.findByRmId(rmId);
 }
 
-module.exports = { getAllAgents, getAgentById, assignRm, transferAgent, activateAgent, suspendAgent, updateKyc, getAgentsByRm };
+module.exports = { getAllAgents, getAgentById, assignRm, transferAgent, activateAgent, suspendAgent, updateKyc, assignAllToRm, getAgentsByRm };
