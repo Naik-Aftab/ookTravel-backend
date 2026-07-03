@@ -2,6 +2,7 @@ const agentRepo  = require('../repositories/agent.repository');
 const rmRepo     = require('../repositories/rm.repository');
 const notifRepo  = require('../repositories/notification.repository');
 const auditRepo  = require('../repositories/audit.repository');
+const { sendEmail, onboardingCertificateEmail } = require('../utils/email');
 
 async function getAllAgents(filters) {
   return agentRepo.findAll(filters);
@@ -56,6 +57,19 @@ async function updateKyc(id, status, adminId, adminName, ip) {
   if (!['verified', 'rejected'].includes(status)) throw Object.assign(new Error('Invalid KYC status'), { statusCode: 400 });
   await agentRepo.updateKycStatus(id, status);
   await auditRepo.log({ user_type: 'admin', user_id: adminId, user_name: adminName, action: 'AGENT_KYC_UPDATED', entity_type: 'agent', entity_id: id, new_values: { kyc_status: status }, ip_address: ip });
+
+  if (status === 'verified') {
+    const agent = await agentRepo.findById(id);
+
+    await notifRepo.create({
+      user_type: 'agent', user_id: id,
+      title: 'KYC Verified — Certificate Issued',
+      message: 'Your KYC has been verified. Your onboarding certificate has been sent to your email.',
+      type: 'kyc', entity_type: 'agent', entity_id: id,
+    });
+
+    sendEmail(onboardingCertificateEmail(agent)).catch(() => {});
+  }
 }
 
 async function assignAllToRm(rmId, adminId, adminName, ip) {

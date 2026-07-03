@@ -64,7 +64,7 @@ async function agentLedger(agentId) {
   );
 }
 
-async function allAgentLedgers({ page = 1, limit = 20, search } = {}) {
+async function agentMonthlyLedgers({ page = 1, limit = 20, search, status } = {}) {
   const offset = (page - 1) * limit;
   let where = '1=1';
   const params = [];
@@ -74,58 +74,62 @@ async function allAgentLedgers({ page = 1, limit = 20, search } = {}) {
     params.push(`%${search}%`, `%${search}%`);
   }
 
+  let havingClause = '';
+  if (status === 'paid') {
+    havingClause = 'HAVING month_status = \'paid\'';
+  } else if (status === 'unpaid') {
+    havingClause = 'HAVING month_status = \'unpaid\'';
+  }
+
   const countRow = await queryOne(
-    `SELECT COUNT(*) AS total FROM ooktravel_agents a WHERE ${where}`, params
+    `SELECT COUNT(*) AS total FROM (
+       SELECT a.id
+       FROM ooktravel_agents a
+       INNER JOIN ooktravel_commissions c ON c.agent_id = a.id
+       WHERE ${where}
+       GROUP BY a.id, DATE_FORMAT(c.created_at, '%Y-%m')
+       ${havingClause}
+     ) AS sub`,
+    params
   );
+
   const rows = await query(
-    `SELECT a.id, a.full_name, a.email, a.agency_name,
-       COALESCE(SUM(c.premium_amount),    0) AS total_premium,
-       COALESCE(SUM(c.commission_amount), 0) AS commission_earned,
-       COALESCE(SUM(c.paid_amount),       0) AS paid_amount,
-       COALESCE(SUM(c.pending_amount),    0) AS pending_amount
+    `SELECT
+       a.id AS agent_id,
+       a.full_name,
+       a.email,
+       DATE_FORMAT(c.created_at, '%Y-%m') AS month_key,
+       DATE_FORMAT(c.created_at, '%M %Y') AS month_label,
+       COUNT(c.id) AS policy_count,
+       COALESCE(SUM(c.premium_amount), 0) AS total_premium,
+       COALESCE(SUM(c.commission_amount), 0) AS commission_amount,
+       CASE
+         WHEN COUNT(c.id) = SUM(CASE WHEN c.status = 'paid' THEN 1 ELSE 0 END) THEN 'paid'
+         ELSE 'unpaid'
+       END AS month_status
      FROM ooktravel_agents a
-     LEFT JOIN ooktravel_commissions c ON c.agent_id = a.id
+     INNER JOIN ooktravel_commissions c ON c.agent_id = a.id
      WHERE ${where}
-     GROUP BY a.id ORDER BY a.full_name LIMIT ? OFFSET ?`,
+     GROUP BY a.id, DATE_FORMAT(c.created_at, '%Y-%m')
+     ${havingClause}
+     ORDER BY a.full_name ASC, month_key DESC
+     LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
 
   return { rows, total: countRow.total };
 }
 
-async function createPayment(data) {
-  const result = await query(
-    `INSERT INTO ooktravel_commission_payments
-       (commission_id, agent_id, payment_amount, utr_number, payment_date, payment_proof, remarks, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [data.commission_id, data.agent_id, data.payment_amount,
-     data.utr_number || null, data.payment_date, data.payment_proof || null,
-     data.remarks || null, data.created_by]
-  );
-
-  // Update commission paid/pending amounts
+async function updateAgentMonthStatus(agentId, monthKey, status) {
+  const dbStatus  = status === 'paid' ? 'paid' : 'pending';
   await query(
     `UPDATE ooktravel_commissions
-     SET paid_amount    = paid_amount    + ?,
-         pending_amount = pending_amount - ?,
-         status = CASE
-           WHEN (pending_amount - ?) <= 0 THEN 'paid'
-           ELSE 'partial'
-         END
-     WHERE id = ?`,
-    [data.payment_amount, data.payment_amount, data.payment_amount, data.commission_id]
-  );
-
-  return result.insertId;
-}
-
-async function getPaymentsByCommission(commissionId) {
-  return query(
-    `SELECT cp.*, adm.full_name AS created_by_name
-     FROM ooktravel_commission_payments cp
-     LEFT JOIN ooktravel_admins adm ON adm.id = cp.created_by
-     WHERE cp.commission_id = ? ORDER BY cp.created_at DESC`,
-    [commissionId]
+     SET
+       status         = ?,
+       paid_amount    = CASE WHEN ? = 'paid' THEN commission_amount ELSE 0 END,
+       pending_amount = CASE WHEN ? = 'paid' THEN 0 ELSE commission_amount END
+     WHERE agent_id = ? AND DATE_FORMAT(created_at, '%Y-%m') = ?`,
+    [dbStatus, status, status, agentId, monthKey]
   );
 }
 
@@ -148,6 +152,7 @@ async function currentMonthCommission() {
 }
 
 module.exports = {
-  createCommission, findById, findAll, agentLedger, allAgentLedgers,
-  createPayment, getPaymentsByCommission, summaryStats, currentMonthCommission,
+  createCommission, findById, findAll,
+  agentLedger, agentMonthlyLedgers, updateAgentMonthStatus,
+  summaryStats, currentMonthCommission,
 };

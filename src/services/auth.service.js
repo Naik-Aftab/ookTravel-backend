@@ -70,16 +70,19 @@ async function agentSignup(data) {
   const hashed = await bcrypt.hash(password, 12);
   const id = await agentRepo.create({ full_name: fullName, email, mobile: phoneNumber, password: hashed });
 
-  // Auto-assign to the first active RM
+  // Auto-assign to the first active RM and activate the agent
+  let rmAssigned = false;
   const { rows: activeRms } = await rmRepo.findAll({ status: 'active', limit: 1 });
   if (activeRms.length > 0) {
     const rm = activeRms[0];
     await agentRepo.assignRm(id, rm.id);
+    await agentRepo.updateStatus(id, 'active');
+    rmAssigned = true;
 
     await notifRepo.create({
       user_type: 'rm', user_id: rm.id,
-      title: 'New Agent Registered',
-      message: `${fullName} has registered and been assigned to you.`,
+      title: 'New Agent Assigned',
+      message: `${fullName} has registered and been assigned to you. Their account is now active.`,
       type: 'assignment', entity_type: 'agent', entity_id: id,
     });
 
@@ -87,7 +90,7 @@ async function agentSignup(data) {
       user_type: 'agent', user_id: id, user_name: fullName,
       action: 'AGENT_REGISTERED_RM_AUTO_ASSIGNED',
       entity_type: 'agent', entity_id: id,
-      new_values: { assigned_rm_id: rm.id, rm_name: rm.full_name },
+      new_values: { assigned_rm_id: rm.id, rm_name: rm.full_name, status: 'active' },
     });
   }
 
@@ -97,7 +100,9 @@ async function agentSignup(data) {
     notifRepo.create({
       user_type: 'admin', user_id: admin.id,
       title: 'New Agent Registered',
-      message: `${fullName} has registered and is awaiting your approval.`,
+      message: rmAssigned
+        ? `${fullName} has registered and been auto-activated.`
+        : `${fullName} has registered and is awaiting your approval.`,
       type: 'registration', entity_type: 'agent', entity_id: id,
     })
   ));

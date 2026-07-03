@@ -1,11 +1,11 @@
-const { body, param } = require('express-validator');
+const { body } = require('express-validator');
 
-const createPaymentRules = [
-  body('commission_id').isInt({ min: 1 }),
-  body('payment_amount').isFloat({ min: 0.01 }),
-  body('payment_date').isDate(),
-  body('utr_number').optional().trim(),
-  body('remarks').optional().trim(),
+const updateStatusRules = [
+  body('agent_id').isInt({ min: 1 }),
+  body('month_key').matches(/^\d{4}-\d{2}$/),
+  body('month_label').notEmpty().trim(),
+  body('commission_amount').isFloat({ min: 0 }),
+  body('status').isIn(['paid', 'unpaid']),
 ];
 
-module.exports = { createPaymentRules };
+module.exports = { updateStatusRules };
