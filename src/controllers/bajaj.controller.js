@@ -24,4 +24,11 @@ async function planDetails(req, res, next) {
   } catch (e) { next(e); }
 }
 
-module.exports = { ckyc, proposal, planDetails };
+async function bharatBhramanPremium(req, res, next) {
+  try {
+    const result = await bajajService.getBharatBhramanPremium(req.body.no_of_days);
+    successResponse(res, result, 'Premium fetched successfully');
+  } catch (e) { next(e); }
+}
+
+module.exports = { ckyc, proposal, planDetails, bharatBhramanPremium };

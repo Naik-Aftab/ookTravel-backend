@@ -36,4 +36,8 @@ const planDetailsRules = [
   query('planname').trim().notEmpty().withMessage('planname is required'),
 ];
 
-module.exports = { ckycRules, proposalRules, planDetailsRules };
+const bharatBhramanRules = [
+  body('no_of_days').isInt({ min: 1 }).withMessage('no_of_days must be a positive integer'),
+];
+
+module.exports = { ckycRules, proposalRules, planDetailsRules, bharatBhramanRules };

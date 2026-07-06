@@ -14,8 +14,6 @@ async function getAgentSummary(req, res, next) {
       email: null,
       total_premium: 0,
       commission_earned: 0,
-      paid_amount: 0,
-      pending_amount: 0,
     });
   } catch (e) { next(e); }
 }

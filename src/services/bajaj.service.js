@@ -47,6 +47,22 @@ async function runProposal(payload) {
   return result;
 }
 
+async function getBharatBhramanPremium(no_of_days) {
+  let result;
+  try {
+    const { data } = await axios.post(
+      `${BASE_URL}/travel-insurance/bajaj/bharat-bhraman`,
+      { no_of_days },
+      { timeout: REQUEST_TIMEOUT }
+    );
+    result = data;
+  } catch (err) {
+    logger.error(`Bharat Bhraman premium API failed: ${err.message}`);
+    throw thirdPartyError(err, 'Failed to fetch premium. Please try again.');
+  }
+  return result;
+}
+
 async function getPlanDetails(planname) {
   let result;
   try {
@@ -70,4 +86,4 @@ async function getPlanDetails(planname) {
   return planData;
 }
 
-module.exports = { runCkyc, runProposal, getPlanDetails };
+module.exports = { runCkyc, runProposal, getPlanDetails, getBharatBhramanPremium };

@@ -54,9 +54,7 @@ async function agentLedger(agentId) {
     `SELECT
        a.id AS agent_id, a.full_name, a.email,
        COALESCE(SUM(c.premium_amount),    0) AS total_premium,
-       COALESCE(SUM(c.commission_amount), 0) AS commission_earned,
-       COALESCE(SUM(c.paid_amount),       0) AS paid_amount,
-       COALESCE(SUM(c.pending_amount),    0) AS pending_amount
+       COALESCE(SUM(c.commission_amount), 0) AS commission_earned
      FROM ooktravel_agents a
      LEFT JOIN ooktravel_commissions c ON c.agent_id = a.id
      WHERE a.id = ?
