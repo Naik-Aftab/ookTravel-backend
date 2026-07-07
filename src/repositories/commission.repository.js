@@ -1,6 +1,6 @@
 const { query, queryOne } = require('../config/database');
 
-const COMMISSION_RATE = 25;
+const COMMISSION_RATE = 15;
 
 async function createCommission(policyId, agentId, premiumAmount) {
   const commissionAmount = (premiumAmount * COMMISSION_RATE) / 100;

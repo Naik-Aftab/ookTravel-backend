@@ -105,7 +105,7 @@ CREATE TABLE `ooktravel_commissions` (
   `policy_id` int(11) NOT NULL,
   `agent_id` int(11) NOT NULL,
   `premium_amount` decimal(10,2) NOT NULL,
-  `commission_rate` decimal(5,2) DEFAULT 25.00,
+  `commission_rate` decimal(5,2) DEFAULT 15.00,
   `commission_amount` decimal(10,2) NOT NULL,
   `paid_amount` decimal(10,2) DEFAULT 0.00,
   `pending_amount` decimal(10,2) NOT NULL,
