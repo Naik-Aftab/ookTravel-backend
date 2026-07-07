@@ -57,6 +57,7 @@ async function submitBulkUpload(req, res, next) {
       num_travelers:     parseInt(meta.num_travelers, 10) || 1,
       estimated_premium: parseFloat(meta.estimated_premium) || null,
       payment_amount:    parseFloat(meta.payment_amount)    || null,
+      payment_reference: safeStr(meta.payment_reference) || null,
       traveller_details,
     });
 
