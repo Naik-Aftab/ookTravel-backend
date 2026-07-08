@@ -48,13 +48,13 @@ function generatePolicyInvoicePdf(request) {
     doc.image(LOGO_PATH, 50, logoBoxY + 8, { width: logoW, height: logoH });
 
     doc.fillColor('#bae6fd').fontSize(11).font('Helvetica')
-      .text('Travel Insurance Invoice', 50, logoBoxY + logoH + 16 + 10);
+      .text('Trip Secure Program Invoice', 50, logoBoxY + logoH + 16 + 10);
 
     doc.fillColor(slate).fontSize(11).font('Helvetica')
       .text(`Hi ${traveler_name || 'Traveller'},`, 50, headerH + 20);
     doc.moveDown(0.5);
     doc.text(
-      'Thank you for your payment. Your travel insurance policy request has been received and is being processed. Please find your invoice details below.',
+      'Thank you for your payment. Your Trip Secure Program request has been received and is being processed. Please find your invoice details below.',
       50, doc.y, { width: 495 }
     );
 

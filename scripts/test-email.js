@@ -81,24 +81,24 @@ const tests = [
   //   name:    'RM Approval',
   //   payload: rmApprovalEmail(mockRm),
   // },
-  {
-    name:    'Policy Request Invoice — Individual (with PDF + logo)',
-    payload: policyRequestInvoiceEmail(mockPolicyRequestSingle),
-    buildAttachments: async () => [logoEmailAttachment(), {
-      filename:    `Invoice-${mockPolicyRequestSingle.request_number}.pdf`,
-      content:     await generatePolicyInvoicePdf(mockPolicyRequestSingle),
-      contentType: 'application/pdf',
-    }],
-  },
-  {
-    name:    'Policy Request Invoice — Bulk, 4 travellers (with PDF + logo)',
-    payload: policyRequestInvoiceEmail(mockPolicyRequestBulk),
-    buildAttachments: async () => [logoEmailAttachment(), {
-      filename:    `Invoice-${mockPolicyRequestBulk.request_number}.pdf`,
-      content:     await generatePolicyInvoicePdf(mockPolicyRequestBulk),
-      contentType: 'application/pdf',
-    }],
-  },
+  // {
+  //   name:    'Policy Request Invoice — Individual (with PDF + logo)',
+  //   payload: policyRequestInvoiceEmail(mockPolicyRequestSingle),
+  //   buildAttachments: async () => [logoEmailAttachment(), {
+  //     filename:    `Invoice-${mockPolicyRequestSingle.request_number}.pdf`,
+  //     content:     await generatePolicyInvoicePdf(mockPolicyRequestSingle),
+  //     contentType: 'application/pdf',
+  //   }],
+  // },
+  // {
+  //   name:    'Policy Request Invoice — Bulk, 4 travellers (with PDF + logo)',
+  //   payload: policyRequestInvoiceEmail(mockPolicyRequestBulk),
+  //   buildAttachments: async () => [logoEmailAttachment(), {
+  //     filename:    `Invoice-${mockPolicyRequestBulk.request_number}.pdf`,
+  //     content:     await generatePolicyInvoicePdf(mockPolicyRequestBulk),
+  //     contentType: 'application/pdf',
+  //   }],
+  // },
   {
     name:    'Onboarding Certificate (KYC verified, with PDF + logo)',
     payload: onboardingCertificateEmail(mockAgent),

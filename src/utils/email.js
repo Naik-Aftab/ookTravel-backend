@@ -135,113 +135,81 @@ function onboardingCertificateEmail(agent) {
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f1eb;font-family:Georgia,'Times New Roman',serif;">
+<body style="margin:0;padding:0;background:#fff8f2;font-family:Georgia,'Times New Roman',serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1eb;padding:30px 0;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8f2;padding:30px 0;">
   <tr><td align="center">
     <table width="660" cellpadding="0" cellspacing="0" style="max-width:660px;">
 
-      <!-- Outer gold border -->
-      <tr><td style="background:#b8860b;padding:4px;border-radius:4px;">
-        <!-- Inner cream bg -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffdf5;border-radius:2px;">
+      <!-- Outer gradient border -->
+      <tr><td style="background-color:#f97316;background-image:linear-gradient(120deg,#f97316,#e11d48,#d4a017);padding:5px;border-radius:6px;">
+        <!-- Inner white bg -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:3px;">
           <tr><td style="padding:6px;">
             <!-- Inner thin border -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d4a017;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fbd7b8;">
               <tr><td style="padding:40px 50px;">
 
-                <!-- Corner decorations -->
+                <!-- Brand header -->
                 <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td width="40" style="font-size:22px;color:#b8860b;line-height:1;">❧</td>
-                    <td align="center">
-                      <!-- Brand header -->
-                      <p style="margin:0 0 8px;font-size:10px;letter-spacing:5px;color:#888;text-transform:uppercase;font-family:Arial,sans-serif;">Maa Pranaam Fortune LLP</p>
-                      <img src="cid:ooktravel-logo" alt="OOK Travel" width="150" style="display:inline-block;" />
-                    </td>
-                    <td width="40" align="right" style="font-size:22px;color:#b8860b;line-height:1;">❧</td>
-                  </tr>
-                </table>
-
-                <!-- Gold rule -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;">
-                  <tr>
-                    <td style="border-top:2px solid #b8860b;"></td>
-                    <td width="14" align="center" style="font-size:16px;color:#b8860b;padding:0 6px;">✦</td>
-                    <td style="border-top:2px solid #b8860b;"></td>
-                  </tr>
-                </table>
-
-                <!-- Certificate title -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">
                   <tr><td align="center">
-                    <p style="margin:0;font-size:11px;letter-spacing:6px;color:#888;text-transform:uppercase;font-family:Arial,sans-serif;">Certificate of</p>
-                    <p style="margin:6px 0 0;font-size:38px;color:#1a1a2e;font-style:italic;font-weight:bold;">Onboarding</p>
+                    <p style="margin:0 0 8px;font-size:11px;letter-spacing:5px;color:#666666;text-transform:uppercase;font-family:Arial,sans-serif;">Maa Pranaam Fortune LLP</p>
+                    <img src="cid:ooktravel-logo" alt="OOK Travel" width="150" style="display:inline-block;" />
                   </td></tr>
                 </table>
 
-                <!-- Thin divider -->
-                <table width="60%" cellpadding="0" cellspacing="0" style="margin:18px auto 0;">
-                  <tr>
-                    <td style="border-top:1px solid #d4a017;"></td>
-                    <td width="20" align="center" style="font-size:12px;color:#b8860b;padding:0 5px;">◆</td>
-                    <td style="border-top:1px solid #d4a017;"></td>
-                  </tr>
+                <!-- Certificate title -->
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin:26px 0 0;">
+                  <tr><td align="center">
+                    <p style="margin:0;font-size:46px;color:#e11d48;font-family:'Brush Script MT','Segoe Script','Lucida Handwriting',cursive;">Certificate of Onboarding</p>
+                  </td></tr>
                 </table>
 
                 <!-- Body text -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin:34px 0 0;">
                   <tr><td align="center">
-                    <p style="margin:0;font-size:14px;color:#666;font-family:Arial,sans-serif;">This is to certify that</p>
+                    <p style="margin:0;font-size:15px;color:#4d4d4d;font-family:Arial,sans-serif;">This is to certify that</p>
 
                     <!-- Agent name -->
-                    <p style="margin:14px 0 6px;font-size:32px;color:#b8860b;font-style:italic;">${agent.full_name}</p>
-                    <table width="55%" cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr><td style="border-top:1px solid #b8860b;"></td></tr></table>
+                    <p style="margin:14px 0 6px;font-size:32px;font-weight:bold;color:#f97316;font-style:italic;">${agent.full_name}</p>
+                    <table width="55%" cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr><td style="border-top:1px solid #f97316;"></td></tr></table>
 
-                    <p style="margin:22px auto 0;font-size:14px;color:#555;line-height:1.9;max-width:480px;font-family:Arial,sans-serif;">
+                    <p style="margin:22px auto 0;font-size:14px;color:#444444;line-height:1.9;max-width:480px;font-family:Arial,sans-serif;">
                       has been successfully verified and onboarded as an
                       <strong style="color:#1a1a2e;">Authorized Travel Agent</strong> on the
                       <strong style="color:#1a1a2e;">OOK Travel</strong> platform, operated by
                       <strong style="color:#1a1a2e;">Maa Pranaam Fortune LLP</strong>.
-                      This agent is duly authorized to promote and distribute travel
-                      insurance products through our platform.
+                      This agent is duly authorized to promote and distribute the
+                      Trip Secure Program through our platform.
                     </p>
                   </td></tr>
                 </table>
 
                 <!-- Details band -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 0;background:#fdf6e0;border:1px solid #e8d5a3;border-radius:4px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 0;background:#fff1e6;border:1px solid #fbd7b8;border-radius:6px;">
                   <tr>
-                    <td align="center" style="padding:18px 0;width:50%;border-right:1px solid #e8d5a3;">
-                      <p style="margin:0;font-size:9px;letter-spacing:3px;color:#888;text-transform:uppercase;font-family:Arial,sans-serif;">Agent ID</p>
+                    <td align="center" style="padding:18px 0;width:50%;border-right:1px solid #fbd7b8;">
+                      <p style="margin:0;font-size:10px;letter-spacing:3px;color:#737373;text-transform:uppercase;font-family:Arial,sans-serif;">Agent ID</p>
                       <p style="margin:6px 0 0;font-size:18px;font-weight:bold;color:#1a1a2e;font-family:Arial,sans-serif;">${agentCode}</p>
                     </td>
                     <td align="center" style="padding:18px 0;width:50%;">
-                      <p style="margin:0;font-size:9px;letter-spacing:3px;color:#888;text-transform:uppercase;font-family:Arial,sans-serif;">Issue Date</p>
+                      <p style="margin:0;font-size:10px;letter-spacing:3px;color:#737373;text-transform:uppercase;font-family:Arial,sans-serif;">Issue Date</p>
                       <p style="margin:6px 0 0;font-size:18px;font-weight:bold;color:#1a1a2e;font-family:Arial,sans-serif;">${issueDate}</p>
                     </td>
                   </tr>
                 </table>
 
-                <!-- Bottom gold rule -->
+                <!-- Bottom gradient rule -->
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;">
-                  <tr>
-                    <td style="border-top:2px solid #b8860b;"></td>
-                    <td width="14" align="center" style="font-size:16px;color:#b8860b;padding:0 6px;">✦</td>
-                    <td style="border-top:2px solid #b8860b;"></td>
-                  </tr>
+                  <tr><td height="3" style="background-color:#f97316;background-image:linear-gradient(90deg,#f97316,#e11d48,#d4a017);font-size:0;line-height:0;">&nbsp;</td></tr>
                 </table>
 
                 <!-- Footer -->
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;">
-                  <tr>
-                    <td width="40" style="font-size:22px;color:#b8860b;">❧</td>
-                    <td align="center">
-                      <p style="margin:0;font-size:10px;letter-spacing:3px;color:#b8860b;text-transform:uppercase;font-family:Arial,sans-serif;">Maa Pranaam Fortune LLP</p>
-                      <p style="margin:5px 0 0;font-size:10px;color:#aaa;font-family:Arial,sans-serif;">Powered by OOK Travel &nbsp;|&nbsp; www.ooktravel.in</p>
-                    </td>
-                    <td width="40" align="right" style="font-size:22px;color:#b8860b;">❧</td>
-                  </tr>
+                  <tr><td align="center">
+                    <p style="margin:0;font-size:10px;letter-spacing:3px;color:#f97316;text-transform:uppercase;font-weight:bold;font-family:Arial,sans-serif;">Maa Pranaam Fortune LLP</p>
+                    <p style="margin:5px 0 0;font-size:11px;color:#808080;font-family:Arial,sans-serif;">Powered by OOK Travel &nbsp;|&nbsp; www.ooktravel.in</p>
+                  </td></tr>
                 </table>
 
               </td></tr>
@@ -252,7 +220,7 @@ function onboardingCertificateEmail(agent) {
     </table>
 
     <!-- Sub-note below certificate -->
-    <p style="margin:16px 0 0;font-size:11px;color:#999;font-family:Arial,sans-serif;text-align:center;">
+    <p style="margin:16px 0 0;font-size:12px;color:#737373;font-family:Arial,sans-serif;text-align:center;">
       This is a system-generated certificate and does not require a physical signature or seal.
     </p>
 
@@ -295,13 +263,13 @@ function policyRequestInvoiceEmail(request) {
         <div style="background:#ffffff;display:inline-block;padding:8px 12px;border-radius:6px;">
           <img src="cid:ooktravel-logo" alt="OOK Travel" width="130" style="display:block;" />
         </div>
-        <p style="margin:10px 0 0;color:#bae6fd;font-size:13px;">Travel Insurance Invoice</p>
+        <p style="margin:10px 0 0;color:#bae6fd;font-size:13px;">Trip Secure Program Invoice</p>
       </td></tr>
 
       <tr><td style="padding:28px 32px 0;">
         <p style="margin:0;color:#334155;font-size:15px;">Hi ${traveler_name || 'Traveller'},</p>
         <p style="margin:8px 0 0;color:#475569;font-size:14px;line-height:1.6;">
-          Thank you for your payment. Your travel insurance policy request has been received and is being processed. Here are your invoice details:
+          Thank you for your payment. Your Trip Secure Program request has been received and is being processed. Here are your invoice details:
         </p>
       </td></tr>
 
