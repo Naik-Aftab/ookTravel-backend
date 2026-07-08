@@ -3,9 +3,46 @@ const commRepo     = require('../repositories/commission.repository');
 const notifRepo    = require('../repositories/notification.repository');
 const auditRepo    = require('../repositories/audit.repository');
 const agentRepo    = require('../repositories/agent.repository');
+const logger       = require('../utils/logger');
+const { sendEmail, policyRequestInvoiceEmail } = require('../utils/email');
+const { generatePolicyInvoicePdf }             = require('../utils/invoice-pdf');
+const { logoEmailAttachment }                  = require('../utils/logo');
 
 async function createRequest(data, ip) {
   const { insertId, request_number } = await policyRepo.createRequest(data);
+
+  // Email the customer an invoice (with a PDF copy attached) — best-effort, never blocks the request
+  const details       = data.traveller_details || {};
+  const travelerEmail = details.email || null;
+  if (travelerEmail) {
+    const invoiceData = {
+      request_number,
+      traveler_name:     details.name || null,
+      traveler_email:    travelerEmail,
+      travel_date:       data.travel_date,
+      return_date:       data.return_date,
+      plan_type:         data.plan_type,
+      num_travelers:     data.num_travelers || 1,
+      estimated_premium: data.estimated_premium,
+      payment_amount:    data.payment_amount,
+    };
+
+    generatePolicyInvoicePdf(invoiceData)
+      .then(pdfBuffer => sendEmail({
+        ...policyRequestInvoiceEmail(invoiceData),
+        attachments: [
+          logoEmailAttachment(),
+          {
+            filename:    `Invoice-${request_number}.pdf`,
+            content:     pdfBuffer,
+            contentType: 'application/pdf',
+          },
+        ],
+      }))
+      .catch(err => {
+        logger.error(`Policy request invoice email failed for ${travelerEmail}: ${err.message}`);
+      });
+  }
 
   // Notify agent's assigned RM if any
   const agent = await agentRepo.findById(data.agent_id);

@@ -45,7 +45,7 @@ async function verifyTransport() {
   return verifiedTransportPromise;
 }
 
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, attachments }) {
   try {
     ensureSmtpConfig();
     await verifyTransport();
@@ -55,6 +55,7 @@ async function sendEmail({ to, subject, html }) {
       to,
       subject,
       html,
+      attachments,
     });
 
     logger.info(`Email sent to ${to}: ${info.messageId}`);
@@ -155,8 +156,8 @@ function onboardingCertificateEmail(agent) {
                     <td width="40" style="font-size:22px;color:#b8860b;line-height:1;">❧</td>
                     <td align="center">
                       <!-- Brand header -->
-                      <p style="margin:0 0 4px;font-size:10px;letter-spacing:5px;color:#888;text-transform:uppercase;font-family:Arial,sans-serif;">Maa Pranaam Fortune LLP</p>
-                      <p style="margin:0;font-size:30px;font-weight:bold;color:#1a1a2e;letter-spacing:4px;font-family:Arial,sans-serif;">OOK TRAVEL</p>
+                      <p style="margin:0 0 8px;font-size:10px;letter-spacing:5px;color:#888;text-transform:uppercase;font-family:Arial,sans-serif;">Maa Pranaam Fortune LLP</p>
+                      <img src="cid:ooktravel-logo" alt="OOK Travel" width="150" style="display:inline-block;" />
                     </td>
                     <td width="40" align="right" style="font-size:22px;color:#b8860b;line-height:1;">❧</td>
                   </tr>
@@ -263,4 +264,113 @@ function onboardingCertificateEmail(agent) {
   };
 }
 
-module.exports = { sendEmail, rmApprovalEmail, forgotPasswordEmail, commissionPaidEmail, agentWelcomeEmail, onboardingCertificateEmail };
+function policyRequestInvoiceEmail(request) {
+  const {
+    request_number, traveler_name, traveler_email,
+    travel_date, return_date, plan_type, num_travelers,
+    estimated_premium, payment_amount,
+  } = request;
+
+  const travellers  = Number(num_travelers) || 1;
+  const basePremium = Number(estimated_premium) || 0;
+  const subtotal    = basePremium * travellers;
+  const totalPaid   = Number(payment_amount) || subtotal;
+  const platformFee = Math.max(totalPaid - subtotal, 0);
+
+  const fmt = n => `Rs. ${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+  return {
+    to: traveler_email,
+    subject: `OOK Travel - Invoice for Request ${request_number}`,
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:24px 0;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+
+      <tr><td style="background:#0c4a6e;padding:20px 32px;">
+        <div style="background:#ffffff;display:inline-block;padding:8px 12px;border-radius:6px;">
+          <img src="cid:ooktravel-logo" alt="OOK Travel" width="130" style="display:block;" />
+        </div>
+        <p style="margin:10px 0 0;color:#bae6fd;font-size:13px;">Travel Insurance Invoice</p>
+      </td></tr>
+
+      <tr><td style="padding:28px 32px 0;">
+        <p style="margin:0;color:#334155;font-size:15px;">Hi ${traveler_name || 'Traveller'},</p>
+        <p style="margin:8px 0 0;color:#475569;font-size:14px;line-height:1.6;">
+          Thank you for your payment. Your travel insurance policy request has been received and is being processed. Here are your invoice details:
+        </p>
+      </td></tr>
+
+      <tr><td style="padding:20px 32px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:6px;">
+          <tr>
+            <td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;width:50%;">
+              <p style="margin:0;font-size:11px;color:#94a3b8;text-transform:uppercase;">Request Number</p>
+              <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#0f172a;">${request_number}</p>
+            </td>
+            <td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;width:50%;">
+              <p style="margin:0;font-size:11px;color:#94a3b8;text-transform:uppercase;">Plan Type</p>
+              <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#0f172a;text-transform:capitalize;">${plan_type || '-'}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:14px 16px;width:50%;">
+              <p style="margin:0;font-size:11px;color:#94a3b8;text-transform:uppercase;">Travel Date</p>
+              <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#0f172a;">${fmtDate(travel_date)}</p>
+            </td>
+            <td style="padding:14px 16px;width:50%;">
+              <p style="margin:0;font-size:11px;color:#94a3b8;text-transform:uppercase;">Return Date</p>
+              <p style="margin:4px 0 0;font-size:14px;font-weight:bold;color:#0f172a;">${fmtDate(return_date)}</p>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+
+      <tr><td style="padding:24px 32px 0;">
+        <p style="margin:0 0 10px;font-size:13px;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;">Premium Breakup</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:6px;">
+          <tr style="background:#f8fafc;">
+            <td style="padding:10px 16px;font-size:13px;color:#64748b;">Base Premium (per traveller)</td>
+            <td align="right" style="padding:10px 16px;font-size:13px;color:#0f172a;">${fmt(basePremium)}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 16px;font-size:13px;color:#64748b;">Travellers</td>
+            <td align="right" style="padding:10px 16px;font-size:13px;color:#0f172a;">${travellers}</td>
+          </tr>
+          <tr style="background:#f8fafc;">
+            <td style="padding:10px 16px;font-size:13px;color:#64748b;">Subtotal</td>
+            <td align="right" style="padding:10px 16px;font-size:13px;color:#0f172a;">${fmt(subtotal)}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 16px;font-size:13px;color:#64748b;">Platform Fee</td>
+            <td align="right" style="padding:10px 16px;font-size:13px;color:#0f172a;">${fmt(platformFee)}</td>
+          </tr>
+          <tr>
+            <td style="padding:14px 16px;font-size:15px;font-weight:bold;color:#0f172a;border-top:2px solid #0c4a6e;">Total Amount Paid</td>
+            <td align="right" style="padding:14px 16px;font-size:15px;font-weight:bold;color:#0c4a6e;border-top:2px solid #0c4a6e;">${fmt(totalPaid)}</td>
+          </tr>
+        </table>
+      </td></tr>
+
+      <tr><td style="padding:24px 32px 28px;">
+        <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">
+          This is a system-generated invoice for your payment confirmation. Your policy document will be shared once your request is approved and issued.
+        </p>
+        <p style="margin:16px 0 0;font-size:13px;color:#334155;">- OOK Travel Team</p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body></html>`,
+  };
+}
+
+module.exports = {
+  sendEmail, rmApprovalEmail, forgotPasswordEmail, commissionPaidEmail,
+  agentWelcomeEmail, onboardingCertificateEmail, policyRequestInvoiceEmail,
+};

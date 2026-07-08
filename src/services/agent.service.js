@@ -3,6 +3,9 @@ const rmRepo     = require('../repositories/rm.repository');
 const notifRepo  = require('../repositories/notification.repository');
 const auditRepo  = require('../repositories/audit.repository');
 const { sendEmail, onboardingCertificateEmail } = require('../utils/email');
+const { generateOnboardingCertificatePdf }      = require('../utils/certificate-pdf');
+const { logoEmailAttachment }                   = require('../utils/logo');
+const logger = require('../utils/logger');
 
 async function getAllAgents(filters) {
   return agentRepo.findAll(filters);
@@ -68,7 +71,21 @@ async function updateKyc(id, status, adminId, adminName, ip) {
       type: 'kyc', entity_type: 'agent', entity_id: id,
     });
 
-    sendEmail(onboardingCertificateEmail(agent)).catch(() => {});
+    generateOnboardingCertificatePdf(agent)
+      .then(pdfBuffer => sendEmail({
+        ...onboardingCertificateEmail(agent),
+        attachments: [
+          logoEmailAttachment(),
+          {
+            filename:    `Onboarding-Certificate-${agent.id}.pdf`,
+            content:     pdfBuffer,
+            contentType: 'application/pdf',
+          },
+        ],
+      }))
+      .catch(err => {
+        logger.error(`Onboarding certificate email failed for agent ${agent.id}: ${err.message}`);
+      });
   }
 }
 
