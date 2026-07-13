@@ -14,6 +14,13 @@ const pool = mysql.createPool({
   charset:         'utf8mb4',
 });
 
+// Force each session to UTC so NOW()/CURRENT_TIMESTAMP match the UTC values
+// the app writes. Works on shared hosting too — unlike SET GLOBAL, this
+// doesn't require SUPER/SYSTEM_VARIABLES_ADMIN privileges.
+pool.on('connection', (connection) => {
+  connection.query("SET time_zone = '+00:00'");
+});
+
 async function testConnection() {
   try {
     const conn = await pool.getConnection();

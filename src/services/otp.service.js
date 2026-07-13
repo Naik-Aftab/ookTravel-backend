@@ -31,7 +31,7 @@ async function sendOtp(phoneNumber, purpose) {
   // Enforce resend cooldown — prevent spam
   const latest = await otpRepo.findLatest(phoneNumber, purpose);
   if (latest) {
-    const secondsSinceLast = (Date.now() - new Date(latest.created_at).getTime()) / 1000;
+    const secondsSinceLast = Math.max(0, (Date.now() - new Date(latest.created_at).getTime()) / 1000);
     if (secondsSinceLast < RESEND_COOLDOWN_SECONDS) {
       const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - secondsSinceLast);
       throw Object.assign(
