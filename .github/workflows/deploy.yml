@@ -1,0 +1,52 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync files to server
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'node_modules' \
+            --exclude '.env' \
+            --exclude '.env.production' \
+            --exclude 'uploads' \
+            ./ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}"
+
+      - name: Install dependencies and restart PM2
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" '
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            npm ci --omit=dev
+            pm2 describe "${{ secrets.PM2_APP_NAME }}" > /dev/null 2>&1 \
+              && pm2 restart "${{ secrets.PM2_APP_NAME }}" \
+              || pm2 start server.js --name "${{ secrets.PM2_APP_NAME }}"
+            pm2 save
+          '
+
+      - name: Clean up SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
