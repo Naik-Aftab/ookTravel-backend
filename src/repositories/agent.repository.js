@@ -22,13 +22,13 @@ async function findAll({ status, rm_id, search, kyc_status, page = 1, limit = 20
   if (rm_id)      { where += ' AND a.assigned_rm_id = ?'; params.push(rm_id); }
   if (kyc_status) { where += ' AND a.kyc_status = ?'; params.push(kyc_status); }
   if (search) {
-    where += ' AND (a.full_name LIKE ? OR a.email LIKE ? OR a.mobile LIKE ? OR a.agency_name LIKE ?)';
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    where += ' AND (a.full_name LIKE ? OR a.email LIKE ? OR a.mobile LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
 
   const countRow = await queryOne(`SELECT COUNT(*) AS total FROM ooktravel_agents a WHERE ${where}`, params);
   const rows = await query(
-    `SELECT a.id, a.full_name, a.email, a.mobile, a.agency_name, a.pan, a.gst,
+    `SELECT a.id, a.full_name, a.email, a.mobile, a.pan, a.profile_photo,
        a.kyc_status, a.status, a.assigned_rm_id, a.created_at,
        r.full_name AS rm_name
      FROM ooktravel_agents a
@@ -42,7 +42,7 @@ async function findAll({ status, rm_id, search, kyc_status, page = 1, limit = 20
 
 async function findByRmId(rmId) {
   return query(
-    `SELECT a.id, a.full_name, a.email, a.mobile, a.agency_name, a.status, a.kyc_status, a.created_at
+    `SELECT a.id, a.full_name, a.email, a.mobile, a.profile_photo, a.status, a.kyc_status, a.created_at
      FROM ooktravel_agents a WHERE a.assigned_rm_id = ? ORDER BY a.full_name`,
     [rmId]
   );
@@ -92,22 +92,30 @@ async function findByMobile(mobile) {
 }
 
 async function saveBankDetails(id, data) {
+  // Document paths are only passed in when a file was actually uploaded on this request —
+  // COALESCE keeps the previously stored file when an edit doesn't re-upload every document.
   return query(
     `UPDATE ooktravel_agents SET
        account_holder_name = ?,
        bank_name           = ?,
        bank_account        = ?,
-       bank_ifsc           = ?,
-       bank_branch         = ?,
-       pan                 = ?
+       bank_ifsc            = ?,
+       aadhar_number        = ?,
+       pan                  = ?,
+       bank_document        = COALESCE(?, bank_document),
+       aadhar_document      = COALESCE(?, aadhar_document),
+       pan_document         = COALESCE(?, pan_document)
      WHERE id = ?`,
     [
       data.account_holder_name,
       data.bank_name,
       data.account_number,
       data.ifsc_code,
-      data.branch_name,
+      data.aadhar_number,
       data.pan_card_number,
+      data.bank_document || null,
+      data.aadhar_document || null,
+      data.pan_document || null,
       id,
     ]
   );
@@ -116,7 +124,8 @@ async function saveBankDetails(id, data) {
 async function getBankDetails(id) {
   return queryOne(
     `SELECT id, account_holder_name, bank_name, bank_account AS account_number,
-            bank_ifsc AS ifsc_code, bank_branch AS branch_name, pan AS pan_card_number
+            bank_ifsc AS ifsc_code, aadhar_number, pan AS pan_card_number,
+            bank_document, aadhar_document, pan_document
      FROM ooktravel_agents WHERE id = ?`,
     [id]
   );

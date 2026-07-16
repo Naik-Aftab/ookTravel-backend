@@ -23,6 +23,7 @@ async function createRequest(data) {
     'Unknown';
   const travelerMobile = details.phone || partner.mobileNo || null;
   const travelerEmail  = details.email  || partner.email    || null;
+  const destination    = details.destination || details.selectedDestination || null;
   const travelerDetailsJson = typeof details === 'string' ? details : JSON.stringify(details);
 
   const msPerDay = 1000 * 60 * 60 * 24;
@@ -32,13 +33,13 @@ async function createRequest(data) {
 
   const result = await query(
     `INSERT INTO ooktravel_policy_requests
-       (request_number, agent_id, traveler_name, traveler_mobile, traveler_email,
+       (request_number, agent_id, traveler_name, traveler_mobile, traveler_email, destination,
         travel_date, return_date, num_travelers, plan_type, no_of_days,
         estimated_premium, payment_amount, payment_reference, payment_screenshot,
         traveller_details)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      request_number, data.agent_id, travelerName, travelerMobile, travelerEmail,
+      request_number, data.agent_id, travelerName, travelerMobile, travelerEmail, destination,
       data.travel_date, data.return_date, data.num_travelers || 1, data.plan_type || 'individual',
       no_of_days,
       data.estimated_premium || null, data.payment_amount || null,
@@ -69,8 +70,8 @@ async function findAllRequests({ status, rm_id, agent_id, search, page = 1, limi
   if (rm_id)    { where += ' AND r.rm_id = ?';    params.push(rm_id); }
   if (agent_id) { where += ' AND r.agent_id = ?'; params.push(agent_id); }
   if (search) {
-    where += ' AND (r.request_number LIKE ? OR r.traveler_name LIKE ? OR a.full_name LIKE ?)';
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    where += ' AND (r.request_number LIKE ? OR r.traveler_name LIKE ? OR r.destination LIKE ? OR a.full_name LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
   }
 
   const countRow = await queryOne(
@@ -79,7 +80,7 @@ async function findAllRequests({ status, rm_id, agent_id, search, page = 1, limi
     params
   );
   const rows = await query(
-    `SELECT r.id, r.request_number, r.traveler_name, r.travel_date, r.return_date,
+    `SELECT r.id, r.request_number, r.traveler_name, r.destination, r.travel_date, r.return_date,
        r.estimated_premium, r.payment_amount, r.status, r.plan_type, r.num_travelers, r.created_at,
        a.full_name AS agent_name, rm.full_name AS rm_name
      FROM ooktravel_policy_requests r
@@ -124,7 +125,7 @@ async function createPolicy(data) {
 async function findPolicyById(id) {
   return queryOne(
     `SELECT p.*, a.full_name AS agent_name, rm.full_name AS rm_name,
-       r.request_number, r.traveler_name
+       r.request_number, r.traveler_name, r.destination
      FROM ooktravel_policies p
      LEFT JOIN ooktravel_agents           a ON a.id = p.agent_id
      LEFT JOIN ooktravel_rms             rm ON rm.id = p.rm_id

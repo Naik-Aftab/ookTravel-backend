@@ -23,7 +23,7 @@ function generatePolicyInvoicePdf(request) {
   const basePremium = Number(estimated_premium) || 0;
   const subtotal    = basePremium * travellers;
   const totalPaid   = Number(payment_amount) || subtotal;
-  const platformFee = Math.max(totalPaid - subtotal, 0);
+  const serviceCharge = Math.max(totalPaid - subtotal, 0);
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -107,7 +107,7 @@ function generatePolicyInvoicePdf(request) {
     row('Base Premium (per traveller)', fmtMoney(basePremium), { shaded: true });
     row('Travellers', String(travellers));
     row('Subtotal', fmtMoney(subtotal), { shaded: true });
-    row('Platform Fee', fmtMoney(platformFee));
+    row('Service Charge', fmtMoney(serviceCharge));
     row('Total Amount Paid', fmtMoney(totalPaid), { bold: true, topRule: true });
 
     y += 30;

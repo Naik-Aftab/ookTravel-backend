@@ -243,7 +243,7 @@ function policyRequestInvoiceEmail(request) {
   const basePremium = Number(estimated_premium) || 0;
   const subtotal    = basePremium * travellers;
   const totalPaid   = Number(payment_amount) || subtotal;
-  const platformFee = Math.max(totalPaid - subtotal, 0);
+  const serviceCharge = Math.max(totalPaid - subtotal, 0);
 
   const fmt = n => `Rs. ${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
@@ -314,8 +314,8 @@ function policyRequestInvoiceEmail(request) {
             <td align="right" style="padding:10px 16px;font-size:13px;color:#0f172a;">${fmt(subtotal)}</td>
           </tr>
           <tr>
-            <td style="padding:10px 16px;font-size:13px;color:#64748b;">Platform Fee</td>
-            <td align="right" style="padding:10px 16px;font-size:13px;color:#0f172a;">${fmt(platformFee)}</td>
+            <td style="padding:10px 16px;font-size:13px;color:#64748b;">Service Charge</td>
+            <td align="right" style="padding:10px 16px;font-size:13px;color:#0f172a;">${fmt(serviceCharge)}</td>
           </tr>
           <tr>
             <td style="padding:14px 16px;font-size:15px;font-weight:bold;color:#0f172a;border-top:2px solid #0c4a6e;">Total Amount Paid</td>
