@@ -21,7 +21,21 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+          echo "Resolving host..."
+          getent hosts "${{ secrets.SSH_HOST }}" || echo "Could not resolve SSH_HOST as a hostname (it may be a raw IP, which is fine)"
+
+          echo "Scanning host key on port ${{ secrets.SSH_PORT }}..."
+          if ! timeout 15 ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>keyscan_err.log; then
+            echo "::error::ssh-keyscan failed or timed out. This usually means SSH_HOST/SSH_PORT is wrong, or the server's firewall is blocking connections from GitHub's runner IPs."
+            cat keyscan_err.log
+            exit 1
+          fi
+          if [ ! -s ~/.ssh/known_hosts ]; then
+            echo "::error::ssh-keyscan produced no output — host did not respond on that port."
+            exit 1
+          fi
+          echo "Host key captured successfully."
 
       - name: Sync files to server
         run: |
