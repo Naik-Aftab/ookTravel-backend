@@ -31,7 +31,7 @@ async function agentSignup(req, res, next) {
 
 async function agentLogin(req, res, next) {
   try {
-    const result = await authService.agentLogin(req.body.email, req.body.password, req.ip);
+    const result = await authService.agentLogin(req.body.identifier, req.body.password, req.ip);
     successResponse(res, result, 'Login successful');
   } catch (e) { next(e); }
 }

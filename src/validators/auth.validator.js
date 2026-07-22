@@ -57,7 +57,15 @@ const agentSignupRules = [
 ];
 
 const agentLoginRules = [
-  body('email').isEmail().normalizeEmail(),
+  body('identifier')
+    .trim()
+    .notEmpty().withMessage('Email or mobile number is required')
+    .custom((value) => {
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      const isMobile = /^[6-9]\d{9}$/.test(value);
+      if (!isEmail && !isMobile) throw new Error('Enter a valid email or 10-digit mobile number');
+      return true;
+    }),
   body('password').notEmpty(),
 ];
 

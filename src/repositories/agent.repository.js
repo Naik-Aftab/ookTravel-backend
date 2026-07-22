@@ -91,6 +91,10 @@ async function findByMobile(mobile) {
   return queryOne('SELECT * FROM ooktravel_agents WHERE mobile = ?', [mobile]);
 }
 
+async function findByEmailOrMobile(identifier) {
+  return queryOne('SELECT * FROM ooktravel_agents WHERE email = ? OR mobile = ?', [identifier, identifier]);
+}
+
 async function saveBankDetails(id, data) {
   // Document paths are only passed in when a file was actually uploaded on this request —
   // COALESCE keeps the previously stored file when an edit doesn't re-upload every document.
@@ -164,4 +168,4 @@ async function findAssignedRm(agentId) {
   );
 }
 
-module.exports = { create, findById, findByEmail, findByMobile, findByEmailExcluding, findByMobileExcluding, findAll, findByRmId, assignRm, assignAllToRm, updateStatus, updateKycStatus, update, updateDetails, updateProfilePhoto, saveBankDetails, getBankDetails, updateLastLogin, saveRefreshToken, updatePassword, findAssignedRm };
+module.exports = { create, findById, findByEmail, findByMobile, findByEmailOrMobile, findByEmailExcluding, findByMobileExcluding, findAll, findByRmId, assignRm, assignAllToRm, updateStatus, updateKycStatus, update, updateDetails, updateProfilePhoto, saveBankDetails, getBankDetails, updateLastLogin, saveRefreshToken, updatePassword, findAssignedRm };

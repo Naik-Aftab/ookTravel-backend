@@ -3,6 +3,7 @@ node_modules/
 .env.*
 !.env.example
 .env.production
+.env.development
 
 # Logs
 logs/*.log

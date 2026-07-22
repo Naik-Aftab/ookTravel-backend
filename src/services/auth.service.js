@@ -116,8 +116,8 @@ async function agentSignup(data) {
   return agent;
 }
 
-async function agentLogin(email, password, ip) {
-  const agent = await agentRepo.findByEmail(email);
+async function agentLogin(identifier, password, ip) {
+  const agent = await agentRepo.findByEmailOrMobile(identifier);
   if (!agent) throw Object.assign(new Error('Invalid credentials'), { statusCode: 401 });
   if (agent.status !== 'active') throw Object.assign(new Error('Account not active'), { statusCode: 403 });
 
