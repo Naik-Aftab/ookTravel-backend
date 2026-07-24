@@ -24,4 +24,11 @@ async function getAssignedRm(req, res, next) {
   } catch (e) { next(e); }
 }
 
-module.exports = { updateDetails, updateProfilePhoto, getAssignedRm };
+async function deleteAccount(req, res, next) {
+  try {
+    await profileService.deleteAccount(req.body.agent_id, req.body.password);
+    successResponse(res, null, 'Account deleted successfully');
+  } catch (e) { next(e); }
+}
+
+module.exports = { updateDetails, updateProfilePhoto, getAssignedRm, deleteAccount };

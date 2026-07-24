@@ -158,6 +158,34 @@ async function findByMobileExcluding(mobile, excludeId) {
   return queryOne('SELECT id FROM ooktravel_agents WHERE mobile = ? AND id != ?', [mobile, excludeId]);
 }
 
+async function softDeleteAccount(id, unusablePasswordHash) {
+  const anonymizedEmail  = `deleted_agent_${id}@ooktravel.invalid`;
+  const anonymizedMobile = `del${id}`.slice(0, 15);
+
+  return query(
+    `UPDATE ooktravel_agents SET
+       full_name           = 'Deleted User',
+       email                = ?,
+       mobile               = ?,
+       password             = ?,
+       pan                  = NULL,
+       bank_name            = NULL,
+       bank_account         = NULL,
+       bank_ifsc            = NULL,
+       aadhar_number        = NULL,
+       account_holder_name  = NULL,
+       profile_photo        = NULL,
+       pan_document         = NULL,
+       bank_document        = NULL,
+       aadhar_document      = NULL,
+       refresh_token        = NULL,
+       status               = 'suspended',
+       deleted_at           = NOW()
+     WHERE id = ?`,
+    [anonymizedEmail, anonymizedMobile, unusablePasswordHash, id]
+  );
+}
+
 async function findAssignedRm(agentId) {
   return queryOne(
     `SELECT r.full_name, r.mobile, r.email
@@ -168,4 +196,4 @@ async function findAssignedRm(agentId) {
   );
 }
 
-module.exports = { create, findById, findByEmail, findByMobile, findByEmailOrMobile, findByEmailExcluding, findByMobileExcluding, findAll, findByRmId, assignRm, assignAllToRm, updateStatus, updateKycStatus, update, updateDetails, updateProfilePhoto, saveBankDetails, getBankDetails, updateLastLogin, saveRefreshToken, updatePassword, findAssignedRm };
+module.exports = { create, findById, findByEmail, findByMobile, findByEmailOrMobile, findByEmailExcluding, findByMobileExcluding, findAll, findByRmId, assignRm, assignAllToRm, updateStatus, updateKycStatus, update, updateDetails, updateProfilePhoto, saveBankDetails, getBankDetails, updateLastLogin, saveRefreshToken, updatePassword, findAssignedRm, softDeleteAccount };

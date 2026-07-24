@@ -119,6 +119,7 @@ async function agentSignup(data) {
 async function agentLogin(identifier, password, ip) {
   const agent = await agentRepo.findByEmailOrMobile(identifier);
   if (!agent) throw Object.assign(new Error('Invalid credentials'), { statusCode: 401 });
+  if (agent.deleted_at) throw Object.assign(new Error('This account has been deleted'), { statusCode: 403 });
   if (agent.status !== 'active') throw Object.assign(new Error('Account not active'), { statusCode: 403 });
 
   const match = await bcrypt.compare(password, agent.password);

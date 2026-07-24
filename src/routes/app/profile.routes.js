@@ -15,6 +15,11 @@ const updatePhotoRules = [
   body('agent_id').isInt({ min: 1 }).withMessage('agent_id is required'),
 ];
 
+const deleteAccountRules = [
+  body('agent_id').isInt({ min: 1 }).withMessage('agent_id is required'),
+  body('password').notEmpty().withMessage('password is required'),
+];
+
 // GET /api/app/profile/rm/:agentId
 router.get('/rm/:agentId', ctrl.getAssignedRm);
 
@@ -33,5 +38,8 @@ router.patch(
   validate,
   ctrl.updateProfilePhoto
 );
+
+// DELETE /api/app/profile/account
+router.delete('/account', deleteAccountRules, validate, ctrl.deleteAccount);
 
 module.exports = router;
