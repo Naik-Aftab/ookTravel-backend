@@ -42,6 +42,11 @@ const verifyOtpRules = [
   body('purpose').isIn(['signup', 'forgot_password']).withMessage('purpose must be signup or forgot_password'),
 ];
 
+const verifyRmCodeRules = [
+  body('rmCode').trim().notEmpty().withMessage('RM code is required')
+    .isLength({ min: 4, max: 20 }).withMessage('Invalid RM code'),
+];
+
 const agentSignupRules = [
   body('fullName').trim().isLength({ min: 2, max: 100 }).withMessage('Full name must be 2-100 characters'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
@@ -87,6 +92,7 @@ module.exports = {
   adminLoginRules,
   rmSignupRules,
   rmLoginRules,
+  verifyRmCodeRules,
   agentSignupRules,
   agentLoginRules,
   agentResetPasswordRules,

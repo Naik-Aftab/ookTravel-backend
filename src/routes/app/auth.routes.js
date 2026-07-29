@@ -7,7 +7,7 @@ const { authLimiter }    = require('../../middleware/rateLimit.middleware');
 const { validate }       = require('../../middleware/validate.middleware');
 const {
   agentSignupRules, agentLoginRules, agentResetPasswordRules,
-  sendOtpRules, verifyOtpRules,
+  sendOtpRules, verifyOtpRules, verifyRmCodeRules,
 } = require('../../validators/auth.validator');
 
 // OTP
@@ -15,6 +15,7 @@ router.post('/send-otp',   authLimiter, sendOtpRules,   validate, otpCtrl.sendOt
 router.post('/verify-otp', authLimiter, verifyOtpRules,  validate, otpCtrl.verifyOtp);
 
 // Auth
+router.post('/verify-rm-code', authLimiter, verifyRmCodeRules, validate, ctrl.verifyRmCode);
 router.post('/reset-password', agentResetPasswordRules, validate, ctrl.agentResetPassword);
 router.post('/signup',  agentSignupRules, validate, ctrl.agentSignup);
 router.post('/login',   authLimiter, agentLoginRules, validate, ctrl.agentLogin);

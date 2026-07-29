@@ -22,6 +22,13 @@ async function rmLogin(req, res, next) {
   } catch (e) { next(e); }
 }
 
+async function verifyRmCode(req, res, next) {
+  try {
+    const rm = await authService.verifyRmCode(req.body.rmCode);
+    successResponse(res, { rmCode: rm.rm_code, rmName: rm.full_name }, 'RM code verified');
+  } catch (e) { next(e); }
+}
+
 async function agentSignup(req, res, next) {
   try {
     const agent = await authService.agentSignup(req.body);
@@ -80,4 +87,4 @@ async function logout(req, res) {
   successResponse(res, null, 'Logged out successfully');
 }
 
-module.exports = { adminLogin, rmSignup, rmLogin, agentSignup, agentLogin, agentResetPassword, refreshTokens, forgotPassword, resetPassword, changePassword, logout };
+module.exports = { adminLogin, rmSignup, rmLogin, verifyRmCode, agentSignup, agentLogin, agentResetPassword, refreshTokens, forgotPassword, resetPassword, changePassword, logout };

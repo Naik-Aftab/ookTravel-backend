@@ -58,6 +58,16 @@ async function rmLogin(email, password, ip) {
   };
 }
 
+// Shared by the standalone /verify-rm-code check (called on the app's Send OTP
+// step, before any OTP is issued) and agentSignup itself, so both paths reject
+// the same way for a bad code.
+async function verifyRmCode(rmCode) {
+  const rm = await rmRepo.findByCode((rmCode || '').trim().toUpperCase());
+  if (!rm) throw Object.assign(new Error('Invalid RM code'), { statusCode: 400 });
+  if (rm.status !== 'active') throw Object.assign(new Error('This RM code is not currently active'), { statusCode: 400 });
+  return rm;
+}
+
 async function agentSignup(data) {
   const { fullName, email, phoneNumber, password, rmCode } = data;
 
@@ -68,15 +78,14 @@ async function agentSignup(data) {
   if (phoneExists) throw Object.assign(new Error('Phone number already registered'), { statusCode: 409 });
 
   // RM code is optional. If supplied, it must resolve to a real, active RM (a typo
-  // shouldn't silently succeed and leave the agent unassigned). If not supplied,
-  // auto-assign to whichever active RM currently has the fewest policy requests
-  // instead of making the agent wait for admin approval.
+  // shouldn't silently succeed and leave the agent unassigned) — the app already
+  // checks this via verifyRmCode() before OTP is sent, this is the server-side guard.
+  // If not supplied, auto-assign to whichever active RM currently has the fewest
+  // policy requests instead of making the agent wait for admin approval.
   let rm = null;
   let assignedByCode = false;
   if (rmCode && rmCode.trim()) {
-    rm = await rmRepo.findByCode(rmCode.trim().toUpperCase());
-    if (!rm) throw Object.assign(new Error('Invalid RM code'), { statusCode: 400 });
-    if (rm.status !== 'active') throw Object.assign(new Error('This RM code is not currently active'), { statusCode: 400 });
+    rm = await verifyRmCode(rmCode);
     assignedByCode = true;
   } else {
     rm = await rmRepo.findLeastLoadedActive();
@@ -213,4 +222,4 @@ async function changePassword(role, userId, oldPassword, newPassword) {
   await repo.updatePassword(userId, hashed);
 }
 
-module.exports = { adminLogin, rmSignup, rmLogin, agentSignup, agentLogin, agentResetPassword, refreshTokens, adminForgotPassword, adminResetPassword, changePassword };
+module.exports = { adminLogin, rmSignup, rmLogin, verifyRmCode, agentSignup, agentLogin, agentResetPassword, refreshTokens, adminForgotPassword, adminResetPassword, changePassword };
