@@ -54,12 +54,12 @@ async function rmLogin(email, password, ip) {
   return {
     accessToken: signAccessToken(payload),
     refreshToken,
-    user: { id: rm.id, full_name: rm.full_name, email: rm.email, status: rm.status },
+    user: { id: rm.id, full_name: rm.full_name, email: rm.email, status: rm.status, rm_code: rm.rm_code },
   };
 }
 
 async function agentSignup(data) {
-  const { fullName, email, phoneNumber, password } = data;
+  const { fullName, email, phoneNumber, password, rmCode } = data;
 
   const emailExists = await agentRepo.findByEmail(email);
   if (emailExists) throw Object.assign(new Error('Email already registered'), { statusCode: 409 });
@@ -67,30 +67,42 @@ async function agentSignup(data) {
   const phoneExists = await agentRepo.findByMobile(phoneNumber);
   if (phoneExists) throw Object.assign(new Error('Phone number already registered'), { statusCode: 409 });
 
+  // RM code is optional. If supplied, it must resolve to a real, active RM (a typo
+  // shouldn't silently succeed and leave the agent unassigned). If not supplied,
+  // auto-assign to whichever active RM currently has the fewest policy requests
+  // instead of making the agent wait for admin approval.
+  let rm = null;
+  let assignedByCode = false;
+  if (rmCode && rmCode.trim()) {
+    rm = await rmRepo.findByCode(rmCode.trim().toUpperCase());
+    if (!rm) throw Object.assign(new Error('Invalid RM code'), { statusCode: 400 });
+    if (rm.status !== 'active') throw Object.assign(new Error('This RM code is not currently active'), { statusCode: 400 });
+    assignedByCode = true;
+  } else {
+    rm = await rmRepo.findLeastLoadedActive();
+  }
+
   const hashed = await bcrypt.hash(password, 12);
   const id = await agentRepo.create({ full_name: fullName, email, mobile: phoneNumber, password: hashed });
 
-  // Auto-assign to the first active RM and activate the agent
-  let rmAssigned = false;
-  const { rows: activeRms } = await rmRepo.findAll({ status: 'active', limit: 1 });
-  if (activeRms.length > 0) {
-    const rm = activeRms[0];
+  if (rm) {
     await agentRepo.assignRm(id, rm.id);
     await agentRepo.updateStatus(id, 'active');
-    rmAssigned = true;
 
     await notifRepo.create({
       user_type: 'rm', user_id: rm.id,
       title: 'New Agent Assigned',
-      message: `${fullName} has registered and been assigned to you. Their account is now active.`,
+      message: assignedByCode
+        ? `${fullName} has registered using your RM code and been assigned to you. Their account is now active.`
+        : `${fullName} has registered and been auto-assigned to you based on current workload. Their account is now active.`,
       type: 'assignment', entity_type: 'agent', entity_id: id,
     });
 
     await auditRepo.log({
       user_type: 'agent', user_id: id, user_name: fullName,
-      action: 'AGENT_REGISTERED_RM_AUTO_ASSIGNED',
+      action: assignedByCode ? 'AGENT_REGISTERED_RM_CODE_ASSIGNED' : 'AGENT_REGISTERED_RM_AUTO_BALANCED',
       entity_type: 'agent', entity_id: id,
-      new_values: { assigned_rm_id: rm.id, rm_name: rm.full_name, status: 'active' },
+      new_values: { assigned_rm_id: rm.id, rm_name: rm.full_name, rm_code: rm.rm_code, status: 'active' },
     });
   }
 
@@ -100,9 +112,11 @@ async function agentSignup(data) {
     notifRepo.create({
       user_type: 'admin', user_id: admin.id,
       title: 'New Agent Registered',
-      message: rmAssigned
-        ? `${fullName} has registered and been auto-activated.`
-        : `${fullName} has registered and is awaiting your approval.`,
+      message: rm
+        ? (assignedByCode
+            ? `${fullName} has registered with RM code ${rm.rm_code} and been auto-activated.`
+            : `${fullName} has registered without an RM code and been auto-assigned to ${rm.full_name} (${rm.rm_code}) based on workload.`)
+        : `${fullName} has registered and is awaiting your approval — no active RM was available for auto-assignment.`,
       type: 'registration', entity_type: 'agent', entity_id: id,
     })
   ));

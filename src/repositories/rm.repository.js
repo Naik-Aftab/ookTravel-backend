@@ -6,6 +6,12 @@ async function create(data) {
     'INSERT INTO ooktravel_rms (full_name, email, mobile, password) VALUES (?, ?, ?, ?)',
     [full_name, email, mobile, password]
   );
+
+  // Code is derived from the auto-increment id (only known after insert), so it's
+  // generated in a follow-up UPDATE rather than passed into the INSERT.
+  const rmCode = `RM${String(result.insertId).padStart(4, '0')}`;
+  await query('UPDATE ooktravel_rms SET rm_code = ? WHERE id = ?', [rmCode, result.insertId]);
+
   return result.insertId;
 }
 
@@ -23,6 +29,26 @@ async function findByEmail(email) {
   return queryOne('SELECT * FROM ooktravel_rms WHERE email = ?', [email]);
 }
 
+async function findByCode(rmCode) {
+  return queryOne('SELECT * FROM ooktravel_rms WHERE rm_code = ?', [rmCode]);
+}
+
+// Used to auto-assign agents who sign up without an RM code — picks the active RM
+// currently carrying the fewest policy requests still in 'assigned' status (i.e.
+// current open workload, not lifetime totals) so new agents get spread out instead
+// of piling onto whichever RM happened to be found first.
+async function findLeastLoadedActive() {
+  return queryOne(
+    `SELECT r.*, COUNT(pr.id) AS policy_request_count
+     FROM ooktravel_rms r
+     LEFT JOIN ooktravel_policy_requests pr ON pr.rm_id = r.id AND pr.status = 'assigned'
+     WHERE r.status = 'active'
+     GROUP BY r.id
+     ORDER BY policy_request_count ASC, r.id ASC
+     LIMIT 1`
+  );
+}
+
 async function findAll({ status, search, page = 1, limit = 20 } = {}) {
   const offset = (page - 1) * limit;
   let where = '1=1';
@@ -36,7 +62,7 @@ async function findAll({ status, search, page = 1, limit = 20 } = {}) {
 
   const countRow = await queryOne(`SELECT COUNT(*) AS total FROM ooktravel_rms r WHERE ${where}`, params);
   const rows     = await query(
-    `SELECT r.id, r.full_name, r.email, r.mobile, r.status, r.last_login, r.created_at,
+    `SELECT r.id, r.full_name, r.email, r.mobile, r.rm_code, r.status, r.last_login, r.created_at,
        (SELECT COUNT(*) FROM ooktravel_agents ag WHERE ag.assigned_rm_id = r.id) AS agent_count
      FROM ooktravel_rms r WHERE ${where} ORDER BY r.created_at DESC LIMIT ? OFFSET ?`,
     [...params, limit, offset]
@@ -73,4 +99,4 @@ async function deleteById(id) {
   return query('DELETE FROM ooktravel_rms WHERE id = ?', [id]);
 }
 
-module.exports = { create, findById, findByEmail, findAll, updateStatus, update, updatePassword, updateLastLogin, saveRefreshToken, deleteById };
+module.exports = { create, findById, findByEmail, findByCode, findLeastLoadedActive, findAll, updateStatus, update, updatePassword, updateLastLogin, saveRefreshToken, deleteById };

@@ -54,6 +54,8 @@ const agentSignupRules = [
     if (val !== req.body.password) throw new Error('Passwords do not match');
     return true;
   }),
+  body('rmCode').trim().optional({ values: 'falsy' })
+    .isLength({ min: 4, max: 20 }).withMessage('Invalid RM code'),
 ];
 
 const agentLoginRules = [

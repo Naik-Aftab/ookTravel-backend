@@ -25,7 +25,10 @@ async function rmLogin(req, res, next) {
 async function agentSignup(req, res, next) {
   try {
     const agent = await authService.agentSignup(req.body);
-    successResponse(res, { agent }, 'Registration successful. Awaiting admin approval.', 201);
+    const message = agent.status === 'active'
+      ? 'Registration successful. Your account is now active.'
+      : 'Registration successful. Awaiting admin approval.';
+    successResponse(res, { agent }, message, 201);
   } catch (e) { next(e); }
 }
 

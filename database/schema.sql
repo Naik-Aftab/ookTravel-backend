@@ -235,6 +235,7 @@ CREATE TABLE `ooktravel_rms` (
   `full_name` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `mobile` varchar(15) NOT NULL,
+  `rm_code` varchar(20) NOT NULL,
   `password` varchar(255) NOT NULL,
   `status` enum('pending','active','suspended') DEFAULT 'pending',
   `approved_by` int(11) DEFAULT NULL,
@@ -305,6 +306,7 @@ ALTER TABLE `ooktravel_rms`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`),
   ADD UNIQUE KEY `mobile` (`mobile`),
+  ADD UNIQUE KEY `rm_code` (`rm_code`),
   ADD KEY `approved_by` (`approved_by`);
 
 --
