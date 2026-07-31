@@ -2,8 +2,8 @@
 // forceUpdate blocks app usage until the user updates; leave false for optional prompts.
 module.exports = {
   android: {
-    latestVersion: '1.0.6',
-    latestVersionCode: 7,
+    latestVersion: '1.0.7',
+    latestVersionCode: 8,
     forceUpdate: false,
     updateUrl: 'https://play.google.com/store/apps/details?id=com.maapranaamfortune.ooktravel',
     releaseNotes: '',
