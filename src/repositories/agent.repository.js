@@ -186,6 +186,19 @@ async function softDeleteAccount(id, unusablePasswordHash) {
   );
 }
 
+async function findIdsByTarget(targetType, targetMeta) {
+  let where = 'a.deleted_at IS NULL';
+  const params = [];
+
+  if (targetType === 'status')     { where += ' AND a.status = ?';     params.push(targetMeta); }
+  if (targetType === 'kyc_status') { where += ' AND a.kyc_status = ?'; params.push(targetMeta); }
+  if (targetType === 'rm')         { where += ' AND a.assigned_rm_id = ?'; params.push(targetMeta); }
+  // targetType === 'all' sends to every non-deleted agent, no extra filter needed.
+
+  const rows = await query(`SELECT id FROM ooktravel_agents a WHERE ${where}`, params);
+  return rows.map(r => r.id);
+}
+
 async function findAssignedRm(agentId) {
   return queryOne(
     `SELECT r.full_name, r.mobile, r.email
@@ -196,4 +209,4 @@ async function findAssignedRm(agentId) {
   );
 }
 
-module.exports = { create, findById, findByEmail, findByMobile, findByEmailOrMobile, findByEmailExcluding, findByMobileExcluding, findAll, findByRmId, assignRm, assignAllToRm, updateStatus, updateKycStatus, update, updateDetails, updateProfilePhoto, saveBankDetails, getBankDetails, updateLastLogin, saveRefreshToken, updatePassword, findAssignedRm, softDeleteAccount };
+module.exports = { create, findById, findByEmail, findByMobile, findByEmailOrMobile, findByEmailExcluding, findByMobileExcluding, findAll, findByRmId, findIdsByTarget, assignRm, assignAllToRm, updateStatus, updateKycStatus, update, updateDetails, updateProfilePhoto, saveBankDetails, getBankDetails, updateLastLogin, saveRefreshToken, updatePassword, findAssignedRm, softDeleteAccount };

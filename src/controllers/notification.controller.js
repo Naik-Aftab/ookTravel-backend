@@ -30,4 +30,21 @@ async function unreadCount(req, res, next) {
   } catch (e) { next(e); }
 }
 
-module.exports = { getAll, markRead, markAllRead, unreadCount };
+async function send(req, res, next) {
+  try {
+    const result = await notifService.sendNotification(
+      req.body, req.user.id, req.user.full_name || req.user.email, req.ip
+    );
+    successResponse(res, result, 'Notification sent');
+  } catch (e) { next(e); }
+}
+
+async function sentHistory(req, res, next) {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const { rows, total } = await notifService.getSentHistory({ page: +page, limit: +limit });
+    paginatedResponse(res, rows, total, page, limit, 'Sent notifications retrieved');
+  } catch (e) { next(e); }
+}
+
+module.exports = { getAll, markRead, markAllRead, unreadCount, send, sentHistory };

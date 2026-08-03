@@ -10,6 +10,17 @@ async function create(data) {
   return result.insertId;
 }
 
+async function createBatch({ batchId, agentIds, title, message, category }) {
+  if (!agentIds.length) return;
+  const values = agentIds.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+  const params = agentIds.flatMap(agentId => ['agent', agentId, title, message, category, batchId]);
+  return query(
+    `INSERT INTO ooktravel_notifications (user_type, user_id, title, message, category, batch_id)
+     VALUES ${values}`,
+    params
+  );
+}
+
 async function findByUser(userType, userId, { page = 1, limit = 20 } = {}) {
   const offset = (page - 1) * limit;
   const countRow = await queryOne(
@@ -47,4 +58,4 @@ async function unreadCount(userType, userId) {
   return row.count;
 }
 
-module.exports = { create, findByUser, markRead, markAllRead, unreadCount };
+module.exports = { create, createBatch, findByUser, markRead, markAllRead, unreadCount };

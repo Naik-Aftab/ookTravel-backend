@@ -9,6 +9,7 @@ router.use('/policy',       require('./policy.routes'));
 router.use('/policy-issue', require('./policy-issue.routes'));
 router.use('/commission',   require('./commission.routes'));
 router.use('/payment',      require('./payment.routes'));
+router.use('/notification', require('./notification.routes'));
 router.use('/version',      require('./version.routes'));
 
 module.exports = router;

@@ -146,10 +146,50 @@ CREATE TABLE `ooktravel_notifications` (
   `title` varchar(200) NOT NULL,
   `message` text NOT NULL,
   `type` varchar(50) DEFAULT NULL,
+  `category` enum('marketing','kyc_update','commission_paid','general') DEFAULT NULL,
+  `batch_id` int(11) DEFAULT NULL,
   `entity_type` varchar(50) DEFAULT NULL,
   `entity_id` int(11) DEFAULT NULL,
   `is_read` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ooktravel_notification_batches`
+-- One row per admin "send" action (single or bulk) — powers the send-history view.
+--
+
+CREATE TABLE `ooktravel_notification_batches` (
+  `id` int(11) NOT NULL,
+  `admin_id` int(11) NOT NULL,
+  `title` varchar(200) NOT NULL,
+  `message` text NOT NULL,
+  `category` enum('marketing','kyc_update','commission_paid','general') NOT NULL,
+  `target_type` enum('single','all','status','kyc_status','rm') NOT NULL,
+  `target_meta` varchar(100) DEFAULT NULL,
+  `recipient_count` int(11) NOT NULL DEFAULT 0,
+  `push_sent_count` int(11) NOT NULL DEFAULT 0,
+  `push_failed_count` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ooktravel_push_tokens`
+--
+
+CREATE TABLE `ooktravel_push_tokens` (
+  `id` int(11) NOT NULL,
+  `agent_id` int(11) NOT NULL,
+  `expo_push_token` varchar(255) NOT NULL,
+  `platform` enum('ios','android') NOT NULL,
+  `device_info` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -281,7 +321,17 @@ ALTER TABLE `ooktravel_commission_payments`
 ALTER TABLE `ooktravel_notifications`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_user` (`user_type`,`user_id`),
-  ADD KEY `idx_read` (`is_read`);
+  ADD KEY `idx_read` (`is_read`),
+  ADD KEY `idx_batch` (`batch_id`);
+
+ALTER TABLE `ooktravel_notification_batches`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_admin` (`admin_id`);
+
+ALTER TABLE `ooktravel_push_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `expo_push_token` (`expo_push_token`),
+  ADD KEY `idx_agent` (`agent_id`);
 
 ALTER TABLE `ooktravel_otps`
   ADD PRIMARY KEY (`id`),
@@ -331,6 +381,12 @@ ALTER TABLE `ooktravel_commission_payments`
 ALTER TABLE `ooktravel_notifications`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+ALTER TABLE `ooktravel_notification_batches`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `ooktravel_push_tokens`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `ooktravel_otps`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
@@ -370,6 +426,15 @@ ALTER TABLE `ooktravel_policy_requests`
 
 ALTER TABLE `ooktravel_rms`
   ADD CONSTRAINT `ooktravel_rms_ibfk_1` FOREIGN KEY (`approved_by`) REFERENCES `ooktravel_admins` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `ooktravel_notifications`
+  ADD CONSTRAINT `ooktravel_notifications_ibfk_1` FOREIGN KEY (`batch_id`) REFERENCES `ooktravel_notification_batches` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `ooktravel_notification_batches`
+  ADD CONSTRAINT `ooktravel_notification_batches_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `ooktravel_admins` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `ooktravel_push_tokens`
+  ADD CONSTRAINT `ooktravel_push_tokens_ibfk_1` FOREIGN KEY (`agent_id`) REFERENCES `ooktravel_agents` (`id`) ON DELETE CASCADE;
 
 -- --------------------------------------------------------
 
