@@ -19,6 +19,7 @@ const policyRoutes       = require('./src/routes/policy.routes');
 const commissionRoutes   = require('./src/routes/commission.routes');
 const notificationRoutes = require('./src/routes/notification.routes');
 const dashboardRoutes    = require('./src/routes/dashboard.routes');
+const reportRoutes       = require('./src/routes/report.routes');
 const appRoutes          = require('./src/routes/app/index');
 
 const app  = express();
@@ -64,6 +65,7 @@ app.use('/api/policies',      policyRoutes);
 app.use('/api/commissions',   commissionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard',     dashboardRoutes);
+app.use('/api/reports',       reportRoutes);
 
 // Agent Mobile App routes
 app.use('/api/app',           appRoutes);
