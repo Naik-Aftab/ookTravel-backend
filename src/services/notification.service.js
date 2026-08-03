@@ -63,7 +63,13 @@ async function getSentHistory(pagination) {
   return batchRepo.findAll(pagination);
 }
 
+async function pushToAgent(agentId, { title, body, data } = {}) {
+  const tokenRows  = await pushTokenRepo.findActiveByAgentIds([agentId]);
+  const pushTokens = tokenRows.map(r => r.expo_push_token);
+  return pushService.sendToTokens(pushTokens, { title, body, data });
+}
+
 module.exports = {
   getNotifications, markRead, markAllRead, getUnreadCount,
-  sendNotification, getSentHistory,
+  sendNotification, getSentHistory, pushToAgent,
 };

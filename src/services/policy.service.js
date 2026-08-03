@@ -3,6 +3,7 @@ const commRepo     = require('../repositories/commission.repository');
 const notifRepo    = require('../repositories/notification.repository');
 const auditRepo    = require('../repositories/audit.repository');
 const agentRepo    = require('../repositories/agent.repository');
+const notificationService = require('./notification.service');
 const logger       = require('../utils/logger');
 const { sendEmail, policyRequestInvoiceEmail } = require('../utils/email');
 const { generatePolicyInvoicePdf }             = require('../utils/invoice-pdf');
@@ -108,6 +109,11 @@ async function updateRequestStatus(id, status, remarks, userId, userRole, ip) {
           message: `Your policy ${policy_number} has been issued.`,
           type: 'policy_issued', entity_type: 'policy', entity_id: insertId,
         });
+        notificationService.pushToAgent(req.agent_id, {
+          title: 'Policy Issued',
+          body: `Your policy ${policy_number} has been issued.`,
+          data: { type: 'policy_issued', entity_type: 'policy', entity_id: insertId },
+        }).catch(err => logger.error(`Push failed for agent ${req.agent_id}: ${err.message}`));
         await auditRepo.log({
           user_type: userRole, user_id: userId, action: 'POLICY_AUTO_ISSUED',
           entity_type: 'policy', entity_id: insertId,
@@ -124,6 +130,11 @@ async function updateRequestStatus(id, status, remarks, userId, userRole, ip) {
     message: `Your request ${req.request_number} status changed to ${status}.`,
     type: 'status_update', entity_type: 'policy_request', entity_id: id,
   });
+  notificationService.pushToAgent(req.agent_id, {
+    title: 'Policy Request Update',
+    body: `Your request ${req.request_number} status changed to ${status}.`,
+    data: { type: 'status_update', entity_type: 'policy_request', entity_id: id },
+  }).catch(err => logger.error(`Push failed for agent ${req.agent_id}: ${err.message}`));
 }
 
 async function issuePolicy(requestId, policyData, pdfPath, userId, userRole, ip) {
@@ -151,6 +162,11 @@ async function issuePolicy(requestId, policyData, pdfPath, userId, userRole, ip)
     message: `Your policy ${policy_number} has been issued.`,
     type: 'policy_issued', entity_type: 'policy', entity_id: insertId,
   });
+  notificationService.pushToAgent(req.agent_id, {
+    title: 'Policy Issued',
+    body: `Your policy ${policy_number} has been issued.`,
+    data: { type: 'policy_issued', entity_type: 'policy', entity_id: insertId },
+  }).catch(err => logger.error(`Push failed for agent ${req.agent_id}: ${err.message}`));
 
   await auditRepo.log({
     user_type: userRole, user_id: userId, action: 'POLICY_ISSUED',
